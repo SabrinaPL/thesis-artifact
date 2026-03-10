@@ -3,7 +3,10 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "coverage": "vitest run --coverage"
   },
   "keywords": [],
   "author": "",
@@ -11,6 +14,7 @@
   "description": "",
   "devDependencies": {
     "@types/node": "^25.4.0",
+    "@vitest/coverage-v8": "^4.0.18",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3",
     "vitest": "^4.0.18"
