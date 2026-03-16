@@ -1,4 +1,5 @@
 import type { DocumentIngestionInterface } from "../types/DocumentIngestionInterface.js";
+// import { SELF_EVAL_PROMPT } from "../prompts/selfEvalPrompt.js"; // TODO: maybe it's better to move the import of the internal self-eval prompt to the DocumentRetrieval module?
 
 /**
  * RAGOrchestrator class is responsible for orchestrating the Retrieval-Augmented Generation (RAG) process.
@@ -21,17 +22,21 @@ export class RAGOrchestrator {
     this.#ingestionInstance = ingestionInstance;
   }
 
-  runExperiment(query: string) {}
+  runIngestionPipeline(rawDocument: string, metaData: object) {
+    this.ingest(rawDocument, metaData);
+  }
+
+  // runRetrievalPipeline(query: string) {}
 
   async ingest(rawDocument: string, metaData: object) {
     await this.#ingestionInstance.ingest(rawDocument, metaData);
   }
 
-  #retrieve(query: string) {}
+  // #retrieve(query: string) {}
 
-  #generate(context: string, query: string) {}
+  // #generate(context: string, query: string) {}
 
-  #retrieveSelfEvaluate(query: string, generatedIaC: string) {}
+  // #retrieveSelfEvaluate(SELF_EVAL_PROMPT, generatedIaC: string) {}
 
-  #generateSelfEvaluate(context: string, query: string, generatedIaC: string) {}
+  // #generateSelfEvaluate(context: string, query: string, generatedIaC: string) {}
 }

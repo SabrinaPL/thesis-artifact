@@ -25,8 +25,9 @@ const ingestion = new DocumentIngestion(vectorDBStore);
 const orchestrator = new RAGOrchestrator(ingestion /*, retrieval, llm*/);
 orchestrator.ingest("raw document", { metaData: "metaData" }); // I added dummy args now just to test the ingest flow
 
-// orchestrator.runExperiment(PROMPT_FIRST_EXPERIMENT);
-// orchestrator.runExperiment(PROMPT_SECOND_EXPERIMENT);
-// orchestrator.runExperiment(PROMPT_THIRD_EXPERIMENT);
-// orchestrator.runExperiment(PROMPT_FOURTH_EXPERIMENT);
-// orchestrator.runExperiment(PROMPT_FIFTH_EXPERIMENT);
+// Run the experiments
+// orchestrator.runRetrievalPipeline(PROMPT_FIRST_EXPERIMENT);
+// orchestrator.runRetrievalPipeline(PROMPT_SECOND_EXPERIMENT);
+// orchestrator.runRetrievalPipeline(PROMPT_THIRD_EXPERIMENT);
+// orchestrator.runRetrievalPipeline(PROMPT_FOURTH_EXPERIMENT);
+// orchestrator.runRetrievalPipeline(PROMPT_FIFTH_EXPERIMENT);
