@@ -1,36 +1,37 @@
+import type { DocumentIngestionInterface } from "../types/DocumentIngestionInterface.js";
+
 /**
- * RAGOrchestrator class is responsible for orchestrating the Retrieval-Augmented Generation (RAG) process. 
+ * RAGOrchestrator class is responsible for orchestrating the Retrieval-Augmented Generation (RAG) process.
  * It manages the flow of data through the different stages of retrieval, augmentation, generation and self-evaluation.
  * The class maintains the internal state of the generated IaC and its self-evaluation results.
- * 
+ *
  * @author Sabrina Prichard-Lybeck
  * @author Bea Sanssi
- * 
- * @version 1.0 
+ *
+ * @version 1.0
  */
-class RAGOrchestrator {
-    constructor() {
-        #generatedIaC = null;
-        #generatedIaCSelfEvaluated = null;
-    }
+export class RAGOrchestrator {
+  // #generatedIaC: string | null;
+  // #generatedIaCSelfEvaluated: string | null;
+  #ingestionInstance: DocumentIngestionInterface;
 
-    ingest(rawDocument, metaData) {
-        
-    }
+  constructor(
+    ingestionInstance: DocumentIngestionInterface /*, retrievalInstance, llmInstance*/,
+  ) {
+    this.#ingestionInstance = ingestionInstance;
+  }
 
-    retrieve(query) {
+  runExperiment(query: string) {}
 
-    }
+  async ingest(rawDocument: string, metaData: object) {
+    await this.#ingestionInstance.ingest(rawDocument, metaData);
+  }
 
-    generate(context, query) {
+  #retrieve(query: string) {}
 
-    }
+  #generate(context: string, query: string) {}
 
-    retrieveSelfEvaluate(query, generatedIaC) {
+  #retrieveSelfEvaluate(query: string, generatedIaC: string) {}
 
-    }
-
-    generateSelfEvaluate(context, query, generatedIaC) {
-        
-    }
+  #generateSelfEvaluate(context: string, query: string, generatedIaC: string) {}
 }
