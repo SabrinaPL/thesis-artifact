@@ -11,7 +11,6 @@ import { DocumentIngestion } from "./modules/DocumentIngestion.js";
 //   PROMPT_SECOND_EXPERIMENT,
 //   PROMPT_THIRD_EXPERIMENT,
 //   PROMPT_FOURTH_EXPERIMENT,
-//   PROMPT_FIFTH_EXPERIMENT,
 // } from "./prompts/experimentationPrompts.js";
 
 // Model to be used for the current experiment
@@ -30,4 +29,3 @@ orchestrator.ingest("raw document", { metaData: "metaData" }); // I added dummy 
 // orchestrator.runRetrievalPipeline(PROMPT_SECOND_EXPERIMENT);
 // orchestrator.runRetrievalPipeline(PROMPT_THIRD_EXPERIMENT);
 // orchestrator.runRetrievalPipeline(PROMPT_FOURTH_EXPERIMENT);
-// orchestrator.runRetrievalPipeline(PROMPT_FIFTH_EXPERIMENT);
