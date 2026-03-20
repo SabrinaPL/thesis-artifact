@@ -8,7 +8,15 @@ export class DocumentIngestion {
     this.#vectorDBStore = vectorDBStore;
   }
 
+  async ingestDocuments(documents: { rawDocument: string; metaData: object }[]) {
+    for (const { rawDocument, metaData } of documents) {
+      await this.ingest(rawDocument, metaData);
+    }
+  }
+
   async ingest(rawDocument: string, metaData: object) {
     await this.#vectorDBStore.insertToDB(rawDocument, metaData);
   }
 }
+
+// TODO: needs to use the  url_ingester util to retrieve documents
