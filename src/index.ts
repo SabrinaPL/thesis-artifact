@@ -5,7 +5,7 @@ import { RAGOrchestrator } from "./orchestrator/RAGOrchestrator.js";
 import { VectorDBStore } from "./repositories/VectorDBStore.js";
 import { DocumentIngestion } from "./modules/DocumentIngestion.js";
 // import { DocumentRetrieval } from './modules/DocumentRetrieval.js';
-// import { LLM } from './modules/LLM.js';
+import { LLM } from './modules/LLM.js';
 // import {
 //   PROMPT_FIRST_EXPERIMENT,
 //   PROMPT_SECOND_EXPERIMENT,
@@ -14,14 +14,14 @@ import { DocumentIngestion } from "./modules/DocumentIngestion.js";
 // } from "./prompts/experimentationPrompts.js";
 
 // Model to be used for the current experiment
-// const MODEL = "gpt-5.2";
+const modelName = "gpt-5.2";
 
 // Dependency injection and instantiation of components
 const vectorDBStore = new VectorDBStore();
 const ingestion = new DocumentIngestion(vectorDBStore);
 // const retrieval = new DocumentRetrieval(vectorDBStore);
-// const llm = new LLM(MODEL);
-const orchestrator = new RAGOrchestrator(ingestion /*, retrieval, llm*/);
+const llm = new LLM(modelName);
+const orchestrator = new RAGOrchestrator(ingestion, llm /*, retrieval, llm*/);
 orchestrator.ingest("raw document", { metaData: "metaData" }); // I added dummy args now just to test the ingest flow
 
 // Run the experiments
