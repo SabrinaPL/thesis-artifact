@@ -46,7 +46,15 @@ export class DocumentIngestion {
     for (const [index, chunk] of chunks.entries()) {
       const embedding = await createEmbedding(chunk)
 
+      // // Use a unique chunk key to prevent duplicates in the database
+      // // TODO: consider using a more robust method for generating unique chunk keys, 
+      // // such as hashing the chunk content or using a UUID, 
+      // // especially if the same document might be ingested multiple times.
+      // // Or consider replacing the existing chunks with same resource and reingest
+      // const chunkKey = `${rawDocument}::${index}`
+
       await this.#vectorDBStore.insertToDB(
+        // chunkKey,
         chunk,
         embedding,
         {

@@ -1,7 +1,21 @@
 import mongoose from 'mongoose'
+import dotenv from 'dotenv'
+
+dotenv.config()
+
+const collectionName = process.env.MONGODB_COLLECTION
+
+if (!collectionName) {
+  throw new Error('MONGODB_COLLECTION is not defined in environment variables')
+}
 
 const VectorDocumentSchema = new mongoose.Schema(
   {
+    // chunkKey: {
+    //   type: String,
+    //   required: true,
+    //   unique: true,
+    // },
     text: {
       type: String,
       required: true,
@@ -17,6 +31,7 @@ const VectorDocumentSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    collection: collectionName,
   }
 )
 

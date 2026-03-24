@@ -27,7 +27,7 @@ await connectDB()
 // Preprocessing step: ingestion of documents, parsing and storing in the vector DB
 await orchestrator.runIngestionPipeline()
 const allDocs = await vectorDBStore.getAllDocuments();
-console.log("ALL DOCUMENTS:", allDocs) // Log the first 5 documents to verify the ingestion process;
+console.log("ALL DOCUMENTS:", allDocs.slice(0, 5)) // Log the first 5 documents to verify the ingestion process;
 
 // Run the experiments
 // orchestrator.runRetrievalPipeline(PROMPT_FIRST_EXPERIMENT);

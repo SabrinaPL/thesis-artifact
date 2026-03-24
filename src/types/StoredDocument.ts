@@ -1,5 +1,5 @@
 export type StoredDocument = {
-  id: number
+  // id: number
   text: string
   embedding: number[]
   metadata: Record<string, unknown>
