@@ -18,6 +18,8 @@ export async function parsePDF(url: string) {
       metadata: metadata,
     }
 
+    console.log('Parsed PDF document text:', parsedDocument.text)
+
     return parsedDocument
   } catch (error) {
     console.error('Error parsing PDF document:', error)
