@@ -1,5 +1,7 @@
 // TODO: add logic for parsing and preprocessing documents, including handling different formats (e.g. PDF, text) etc.
 import { PDFParse } from 'pdf-parse'
+import { Readability } from '@mozilla/readability' // Chosen for its ability to extract main content from HTML documents (and reduce noise from ads, navigation etc)
+import { JSDOM } from 'jsdom' 
 
 export async function parsePDF(url: string) {
   console.log('Parsing PDF document from URL:', url)
@@ -20,6 +22,19 @@ export async function parsePDF(url: string) {
 }
 
 // TODO: implement text parser logic here, including handling of different text formats, extraction of relevant information etc.
-export async function parseTextDocument(url: string) {
-  console.log('Parsing text document from URL:', url)
+export async function parseHTMLDocument(url: string) {
+  console.log('Parsing HTML document from URL:', url)
+
+  try {
+    const response = await fetch(url);
+    const html = await response.text();
+    const dom = new JSDOM(html, { url });
+    const reader = new Readability(dom.window.document);
+    const article = reader.parse();
+
+    return { text: article?.textContent ?? '', metadata: { title: article?.title } };
+  } catch (error) {
+    console.error('Error parsing HTML document:', error)
+    // TODO: add error handling logic
+  }
 }
