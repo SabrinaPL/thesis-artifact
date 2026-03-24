@@ -14,11 +14,13 @@ export class VectorDBStore implements VectorDBStoreInterface {
   // }
 
   async insertToDB(
+    // chunkKey: string,
     text: string, 
     embedding: number[], 
     metadata: Record<string, unknown>
   ): Promise<void> {
     const createdDocument = await VectorDocumentModel.create({
+      // chunkKey,
       text,
       embedding,
       metadata,

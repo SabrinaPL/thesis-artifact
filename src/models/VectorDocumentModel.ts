@@ -11,6 +11,11 @@ if (!collectionName) {
 
 const VectorDocumentSchema = new mongoose.Schema(
   {
+    // chunkKey: {
+    //   type: String,
+    //   required: true,
+    //   unique: true,
+    // },
     text: {
       type: String,
       required: true,
