@@ -1,12 +1,12 @@
 // TODO: add prompts (complete IaC tasks / instructions, with increasing difficulty level)
 
-export const PROMPT_FIRST_EXPERIMENT = ``;
+export const PROMPT_FIRST_EXPERIMENT = ``
 
-export const PROMPT_SECOND_EXPERIMENT = ``;
+export const PROMPT_SECOND_EXPERIMENT = ``
 
-export const PROMPT_THIRD_EXPERIMENT = ``;
+export const PROMPT_THIRD_EXPERIMENT = ``
 
-export const PROMPT_FOURTH_EXPERIMENT = ``;
+export const PROMPT_FOURTH_EXPERIMENT = ``
 
 /* Suggestion from Diego:
 In the IaC that we created during the course, we created with OpenTofu/Terraform the elements related to the network, to security aspects, to instances, and created files for the configuration tool (the Ansible inventory). If you want to play the junior role, you can try other elements that we did not see during the IaC weeks. For example:

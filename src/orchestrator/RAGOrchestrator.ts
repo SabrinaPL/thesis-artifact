@@ -1,5 +1,5 @@
-import type { DocumentIngestionInterface } from "../types/DocumentIngestionInterface.js";
-import type { LLMInterface } from "../types/LLMInterface.js";
+import type { DocumentIngestionInterface } from '../types/DocumentIngestionInterface.js'
+import type { LLMInterface } from '../types/LLMInterface.js'
 // import { SELF_EVAL_PROMPT } from "../prompts/selfEvalPrompt.js"; // TODO: maybe it's better to move the import of the internal self-eval prompt to the DocumentRetrieval module?
 
 /**
@@ -15,24 +15,25 @@ import type { LLMInterface } from "../types/LLMInterface.js";
 export class RAGOrchestrator {
   // #generatedIaC: string | null;
   // #generatedIaCSelfEvaluated: string | null;
-  #ingestionInstance: DocumentIngestionInterface;
-  #LLMInstance: LLMInterface;
+  #ingestionInstance: DocumentIngestionInterface
+  #LLMInstance: LLMInterface
 
   constructor(
-    ingestionInstance: DocumentIngestionInterface, llmInstance: LLMInterface /*, retrievalInstance, llmInstance*/,
+    ingestionInstance: DocumentIngestionInterface,
+    llmInstance: LLMInterface /*, retrievalInstance, llmInstance*/,
   ) {
-    this.#ingestionInstance = ingestionInstance;
-    this.#LLMInstance = llmInstance;
+    this.#ingestionInstance = ingestionInstance
+    this.#LLMInstance = llmInstance
   }
 
   runIngestionPipeline() {
-    this.ingest();
+    this.ingest()
   }
 
   // runRetrievalPipeline(query: string) {}
 
   async ingest() {
-    await this.#ingestionInstance.ingestDocuments();
+    await this.#ingestionInstance.ingestDocuments()
   }
 
   // #retrieve(query: string) {}
