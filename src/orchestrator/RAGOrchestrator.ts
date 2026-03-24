@@ -27,13 +27,13 @@ export class RAGOrchestrator {
   }
 
   runIngestionPipeline() {
-    this.#ingestDocuments();
+    this.#ingestDocuments()
   }
 
   // runRetrievalPipeline(query: string) {}
 
   async #ingestDocuments() {
-    await this.#ingestionInstance.ingestDocuments();
+    await this.#ingestionInstance.ingestDocuments()
   }
 
   // #retrieve(query: string) {}

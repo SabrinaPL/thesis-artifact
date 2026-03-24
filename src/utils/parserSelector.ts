@@ -1,0 +1,1 @@
+// TODO: add logic to determine file type and which parser function to use based on the file type (e.g. PDF, text) etc.

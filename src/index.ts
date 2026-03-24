@@ -1,6 +1,6 @@
-import { RAGOrchestrator } from "./orchestrator/RAGOrchestrator.js";
-import { VectorDBStore } from "./repositories/VectorDBStore.js";
-import { DocumentIngestion } from "./modules/DocumentIngestion.js";
+import { RAGOrchestrator } from './orchestrator/RAGOrchestrator.js'
+import { VectorDBStore } from './repositories/VectorDBStore.js'
+import { DocumentIngestion } from './modules/DocumentIngestion.js'
 // import { DocumentRetrieval } from './modules/DocumentRetrieval.js';
 import { LLM } from './modules/LLM.js'
 // import {
@@ -14,8 +14,8 @@ import { LLM } from './modules/LLM.js'
 const modelName = 'gpt-5.2'
 
 // Dependency injection and instantiation of components, to follow the principle of separation of concerns and inversion of control, allowing for better modularity and testability
-const vectorDBStore = new VectorDBStore();
-const ingestion = new DocumentIngestion(vectorDBStore);
+const vectorDBStore = new VectorDBStore()
+const ingestion = new DocumentIngestion(vectorDBStore)
 // const retrieval = new DocumentRetrieval(vectorDBStore);
 const llm = new LLM(modelName)
 const orchestrator = new RAGOrchestrator(ingestion, llm /*, retrieval */)

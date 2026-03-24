@@ -24,7 +24,7 @@ export class DocumentIngestion {
   async ingestDocument(rawDocument: string) {
     // TODO: call the parser and preprocesser here
     // TODO: add check here to determine the type of document (e.g. PDF, text) and call the appropriate parsing function
-    await parsePDF(rawDocument)
+    const parsedDocument = await parsePDF(rawDocument)
 
     // await this.#vectorDBStore.insertToDB(parsedDocument.text, parsedDocument.metadata);
   }
