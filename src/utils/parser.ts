@@ -18,7 +18,7 @@ export async function parsePDF(url: string) {
       metadata: metadata,
     }
 
-    console.log('Parsed PDF document text:', parsedDocument.text)
+    // console.log('Parsed PDF document text:', parsedDocument.text)
 
     return parsedDocument
   } catch (error) {
@@ -36,13 +36,24 @@ export async function parseHTMLDocument(url: string) {
   console.log('Parsing HTML document from URL:', url)
 
   try {
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      },
+    });
     const html = await response.text();
     const dom = new JSDOM(html, { url });
     const reader = new Readability(dom.window.document);
     const article = reader.parse();
 
-    return { text: article?.textContent ?? '', metadata: { title: article?.title } };
+    // console.log('Parsed article object:', article)
+    // console.log('Parsed HTML document text:', article?.textContent)
+    // console.log('Parsed HTML document title:', article?.title)
+
+    const text = article?.textContent ?? dom.window.document.body?.textContent ?? '';
+    const title = article?.title ?? dom.window.document.title;
+
+    return { text, metadata: { title } };
   } catch (error) {
     console.error('Error parsing HTML document:', error)
     // TODO: add error handling logic

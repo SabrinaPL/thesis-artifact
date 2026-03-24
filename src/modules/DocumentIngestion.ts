@@ -29,7 +29,7 @@ export class DocumentIngestion {
       const parser = getParser(rawDocument)
       const parsedDocument = await parser(rawDocument)
 
-      console.log('Parsed document:', parsedDocument)
+    console.log('Parsed document:', parsedDocument)
 
 
     // await this.#vectorDBStore.insertToDB(parsedDocument.text, parsedDocument.metadata);
