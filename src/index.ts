@@ -21,8 +21,10 @@ const vectorDBStore = new VectorDBStore();
 const ingestion = new DocumentIngestion(vectorDBStore);
 // const retrieval = new DocumentRetrieval(vectorDBStore);
 const llm = new LLM(modelName);
-const orchestrator = new RAGOrchestrator(ingestion, llm /*, retrieval, llm*/);
-orchestrator.ingest("raw document", { metaData: "metaData" }); // I added dummy args now just to test the ingest flow
+const orchestrator = new RAGOrchestrator(ingestion, llm /*, retrieval */);
+
+// Preprocessing step: ingestion of documents, parsing and storing in the vector DB
+orchestrator.runIngestionPipeline();
 
 // Run the experiments
 // orchestrator.runRetrievalPipeline(PROMPT_FIRST_EXPERIMENT);

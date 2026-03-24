@@ -1,5 +1,7 @@
 // TODO: add logic herer to handle document ingestion including parsing and preprocessing of documents, communication with the VectorDBStore to store the vector embeddings etc.
 import type { VectorDBStoreInterface } from "../types/VectorDBStoreInterface.js";
+import { parsePDF } from "../utils/parser.js";
+import { retrieveDocumentURLs } from "../utils/urlRetriever.js";
 
 export class DocumentIngestion {
   #vectorDBStore: VectorDBStoreInterface;
@@ -8,15 +10,19 @@ export class DocumentIngestion {
     this.#vectorDBStore = vectorDBStore;
   }
 
-  async ingestDocuments(documents: { rawDocument: string; metaData: object }[]) {
-    for (const { rawDocument, metaData } of documents) {
-      await this.ingest(rawDocument, metaData);
+  async ingestDocuments() {
+    const documentURLs = retrieveDocumentURLs();
+    
+    for (const rawDocument of documentURLs) {
+      await this.ingestDocument(rawDocument);
     }
   }
 
-  async ingest(rawDocument: string, metaData: object) {
-    await this.#vectorDBStore.insertToDB(rawDocument, metaData);
+  async ingestDocument(rawDocument: string) {
+    // TODO: call the parser and preprocesser here
+    // TODO: add check here to determine the type of document (e.g. PDF, text) and call the appropriate parsing function
+    await parsePDF(rawDocument);
+
+    // await this.#vectorDBStore.insertToDB(parsedDocument.text, parsedDocument.metadata);
   }
 }
-
-// TODO: needs to use the  url_ingester util to retrieve documents

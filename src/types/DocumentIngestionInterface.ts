@@ -1,3 +1,4 @@
 export interface DocumentIngestionInterface {
-  ingest(rawDocument: string, metaData: object): Promise<void>;
+  ingestDocuments(): Promise<void>;
+  ingestDocument(rawDocument: string): Promise<void>;
 }

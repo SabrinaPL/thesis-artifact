@@ -25,14 +25,14 @@ export class RAGOrchestrator {
     this.#LLMInstance = llmInstance;
   }
 
-  runIngestionPipeline(rawDocument: string, metaData: object) {
-    this.ingest(rawDocument, metaData);
+  runIngestionPipeline() {
+    this.ingest();
   }
 
   // runRetrievalPipeline(query: string) {}
 
-  async ingest(rawDocument: string, metaData: object) {
-    await this.#ingestionInstance.ingest(rawDocument, metaData);
+  async ingest() {
+    await this.#ingestionInstance.ingestDocuments();
   }
 
   // #retrieve(query: string) {}
