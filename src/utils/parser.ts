@@ -1,15 +1,24 @@
-// TODO: add logic for parsing and preprocessing documents, including handling different formats (e.g. PDF, text) etc.
 import { PDFParse } from 'pdf-parse'
-// import { Readability } from '@mozilla/readability' // Chosen for its ability to extract main content from HTML documents (and reduce noise from ads, navigation etc)
-// import { JSDOM } from 'jsdom' 
+import { Readability } from '@mozilla/readability' // Chosen for its ability to extract main content from HTML documents (and reduce noise from ads, navigation etc)
+import { JSDOM } from 'jsdom'
 import type { ParsedDocument } from '../types/ParsedDocumentType.js'
-import { chromium } from 'playwright'
+import { chromium, type Browser } from 'playwright'
+
+let _browser: Browser | null = null
+
+export async function initBrowser() {
+  _browser = await chromium.launch({ headless: true })
+}
+
+export async function closeBrowser() {
+  await _browser?.close()
+  _browser = null
+}
 
 // export async function parsePDF(url: string) {
 export async function parsePDF(url: string): Promise<ParsedDocument> {
   console.log('Parsing PDF document from URL:', url)
 
-  // TODO: extract metadata from the PDF document
   const parser = new PDFParse({ url })
 
   try {
@@ -18,11 +27,10 @@ export async function parsePDF(url: string): Promise<ParsedDocument> {
 
     const parsedDocument = { 
       text: textResult.text,
-      // metadata: metadata,
       metadata: metadata as unknown as Record<string, unknown>,
     }
 
-    // console.log('Parsed PDF document text:', parsedDocument.text)
+    console.log('Parsed PDF document text:', parsedDocument.text)
 
     return parsedDocument
   } catch (error) {
@@ -35,87 +43,39 @@ export async function parsePDF(url: string): Promise<ParsedDocument> {
   }
 }
 
-// TODO: implement text parser logic here, including handling of different text formats, extraction of relevant information etc.
-// export async function parseHTMLDocument(url: string) {
-// export async function parseHTMLDocument(url: string): Promise<ParsedDocument> {
-//   console.log('Parsing HTML document from URL:', url)
-
-//   try {
-//     const response = await fetch(url, {
-//       headers: {
-//         'User-Agent':
-//           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-//       },
-//     });
-
-//     if (!response.ok) {
-//       throw new Error(`Failed to fetch HTML document: ${response.status}`)
-//     }
-
-//     const html = await response.text();
-//     const dom = new JSDOM(html, { url });
-//     const reader = new Readability(dom.window.document);
-//     const article = reader.parse();
-
-//     const fallbackText = dom.window.document.body.textContent?.trim() ?? ''
-//     const finalText = article?.textContent?.trim() || fallbackText
-//     const finalTitle =
-//       article?.title ?? dom.window.document.title ?? 'Untitled document'
-
-//     console.log('HTML title:', finalTitle)
-//     console.log('HTML text length:', finalText.length)
-
-//     return {
-//       text: finalText,
-//       metadata: {
-//         title: finalTitle,
-//         source: url,
-//       },
-//     }
-//   } catch (error) {
-//     console.error('Error parsing HTML document:', error)
-//     throw error
-//   }
-
-//     // console.log('Parsed article object:', article)
-//     // console.log('Parsed HTML document text:', article?.textContent)
-//     // console.log('Parsed HTML document title:', article?.title)
-
-//   //   const text = article?.textContent ?? dom.window.document.body?.textContent ?? '';
-//   //   const title = article?.title ?? dom.window.document.title;
-
-//   //   return { text, metadata: { title } };
-//   // } catch (error) {
-//   //   console.error('Error parsing HTML document:', error)
-//   //   // TODO: add error handling logic
-//   // }
-// }
-
+// Refactored version of parseHTMLDocument, using Playwright to load the page and JSDOM + Readability to extract main content and title (reducing noise from ads, nav etc and improving quality of extracted text for embedding generation and retrieval)
 export async function parseHTMLDocument(url: string): Promise<ParsedDocument> {
-  console.log('Parsing HTML document with Playwright from URL:', url)
+  console.log('Parsing HTML document from URL:', url)
 
-  const browser = await chromium.launch({ headless: true })
+  if (!_browser) {
+    throw new Error('Browser not initialized. Call initBrowser() before parsing HTML documents.')
+  }
+
+  const page = await _browser.newPage()
 
   try {
-    const page = await browser.newPage()
-
     await page.goto(url, {
       waitUntil: 'domcontentloaded',
       timeout: 60000,
     })
 
-    await page.waitForTimeout(3000)
-    
-    const title = await page.title()
+    // Wait for body to be present so JS-rendered content has a chance to settle
+    await page.waitForSelector('body', { timeout: 10000 })
 
-    const text = await page.evaluate(() => {
-      return document.body?.innerText?.trim() ?? ''
-    })
+    const html = await page.content()
+
+    const dom = new JSDOM(html, { url })
+    const reader = new Readability(dom.window.document)
+    const article = reader.parse()
+
+    const fallbackText = dom.window.document.body?.textContent?.trim() ?? ''
+    const finalText = article?.textContent?.trim() || fallbackText
+    const finalTitle = article?.title || dom.window.document.title || 'Untitled document'
 
     return {
-      text,
+      text: finalText,
       metadata: {
-        title,
+        title: finalTitle,
         source: url,
       },
     }
@@ -123,6 +83,6 @@ export async function parseHTMLDocument(url: string): Promise<ParsedDocument> {
     console.error('Error parsing HTML document:', error)
     throw error
   } finally {
-    await browser.close()
+    await page.close()
   }
 }

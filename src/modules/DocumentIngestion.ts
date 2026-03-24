@@ -4,6 +4,7 @@ import { getParser } from '../utils/parserSelector.js'
 import { retrieveDocumentURLs } from '../utils/urlRetriever.js'
 import { chunkText } from '../utils/textChunker.js'
 import { createEmbedding } from '../utils/embedder.js'
+import { initBrowser, closeBrowser } from '../utils/parser.js'
 
 /**
  * DocumentIngestion class is responsible for handling the ingestion of documents into the system. It retrieves the document URLs, parses and preprocesses the documents, and communicates with the VectorDBStore to store the vector embeddings of the documents.
@@ -18,8 +19,13 @@ export class DocumentIngestion {
   async ingestDocuments() {
     const documentURLs = retrieveDocumentURLs()
 
-    for (const rawDocument of documentURLs) {
-      await this.ingestDocument(rawDocument)
+    await initBrowser()
+    try {
+      for (const rawDocument of documentURLs) {
+        await this.ingestDocument(rawDocument)
+      }
+    } finally {
+      await closeBrowser()
     }
   }
 
@@ -27,7 +33,7 @@ export class DocumentIngestion {
     // TODO: call the parser and preprocesser here
     // TODO: add check here to determine the type of document (e.g. PDF, text) and call the appropriate parsing function
     // const parsedDocument = await parsePDF(rawDocument)
-    const parser = getParser(rawDocument)
+    const parser = await getParser(rawDocument)
     const parsedDocument = await parser(rawDocument)
 
     // Fallback if the parser fails to extract text content, we can skip the document or handle it differently based on the use case
@@ -64,5 +70,5 @@ export class DocumentIngestion {
         }
       )
     }
-  } 
+  }
 }
