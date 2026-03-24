@@ -23,17 +23,17 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Format check
-        run: npm run format:check
-
       - name: Format fix
         run: npm run format
 
-      - name: Lint check
-        run: npm run lint
+      - name: Format check
+        run: npm run format:check
 
       - name: Lint fix
         run: npm run lint:fix
+
+      - name: Lint check
+        run: npm run lint
 
       - name: Build project
         run: npm run build
