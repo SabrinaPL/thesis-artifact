@@ -29,11 +29,11 @@ jobs:
       - name: Format check
         run: npm run format:check
 
-      - name: Lint check
-        run: npm run lint
-
       - name: Lint fix
         run: npm run lint:fix
+
+      - name: Lint check
+        run: npm run lint
 
       - name: Build project
         run: npm run build
