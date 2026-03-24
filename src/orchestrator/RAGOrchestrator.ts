@@ -1,5 +1,5 @@
 import type { DocumentIngestionInterface } from '../types/DocumentIngestionInterface.js'
-import type { LLMInterface } from '../types/LLMInterface.js'
+// import type { LLMInterface } from '../types/LLMInterface.js'
 // import { SELF_EVAL_PROMPT } from "../prompts/selfEvalPrompt.js"; // TODO: maybe it's better to move the import of the internal self-eval prompt to the DocumentRetrieval module?
 
 /**
@@ -16,14 +16,14 @@ export class RAGOrchestrator {
   // #generatedIaC: string | null;
   // #generatedIaCSelfEvaluated: string | null;
   #ingestionInstance: DocumentIngestionInterface
-  #LLMInstance: LLMInterface
+  // #LLMInstance: LLMInterface
 
   constructor(
     ingestionInstance: DocumentIngestionInterface,
-    llmInstance: LLMInterface /*, retrievalInstance, llmInstance*/,
+    // llmInstance: LLMInterface /*, retrievalInstance, llmInstance*/,
   ) {
     this.#ingestionInstance = ingestionInstance
-    this.#LLMInstance = llmInstance
+    // this.#LLMInstance = llmInstance
   }
 
   async runIngestionPipeline() {
