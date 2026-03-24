@@ -3,6 +3,9 @@ import type { VectorDBStoreInterface } from '../types/VectorDBStoreInterface.js'
 import { parsePDF } from '../utils/parser.js'
 import { retrieveDocumentURLs } from '../utils/urlRetriever.js'
 
+/**
+ * DocumentIngestion class is responsible for handling the ingestion of documents into the system. It retrieves the document URLs, parses and preprocesses the documents, and communicates with the VectorDBStore to store the vector embeddings of the documents.
+ */
 export class DocumentIngestion {
   #vectorDBStore: VectorDBStoreInterface
 
