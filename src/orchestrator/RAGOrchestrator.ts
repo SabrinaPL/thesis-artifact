@@ -26,12 +26,12 @@ export class RAGOrchestrator {
   }
 
   runIngestionPipeline() {
-    this.ingest();
+    this.#ingestDocuments();
   }
 
   // runRetrievalPipeline(query: string) {}
 
-  async ingest() {
+  async #ingestDocuments() {
     await this.#ingestionInstance.ingestDocuments();
   }
 
