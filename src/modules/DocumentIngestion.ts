@@ -3,6 +3,7 @@ import type { VectorDBStoreInterface } from '../types/VectorDBStoreInterface.js'
 // import { parsePDF } from '../utils/parser.js'
 import { getParser } from '../utils/parserSelector.js'
 import { retrieveDocumentURLs } from '../utils/urlRetriever.js'
+import { chunkText } from '../utils/textChunker.js'
 
 /**
  * DocumentIngestion class is responsible for handling the ingestion of documents into the system. It retrieves the document URLs, parses and preprocesses the documents, and communicates with the VectorDBStore to store the vector embeddings of the documents.
@@ -29,7 +30,7 @@ export class DocumentIngestion {
     const parser = getParser(rawDocument)
     const parsedDocument = await parser(rawDocument)
 
-    console.log('Parsed document:', parsedDocument)
+    // console.log('Parsed document:', parsedDocument)
 
     // Fallback if the parser fails to extract text content, we can skip the document or handle it differently based on the use case
     if (!parsedDocument.text || !parsedDocument.text.trim()) {
@@ -37,10 +38,17 @@ export class DocumentIngestion {
       return
     }
 
+    const chunks = chunkText(parsedDocument.text)
+    console.log(`Created ${chunks.length} chunks for document: ${rawDocument}`)
+
+
     // await this.#vectorDBStore.insertToDB(parsedDocument.text, parsedDocument.metadata);
-    await this.#vectorDBStore.insertToDB(
-      parsedDocument.text,
-      parsedDocument.metadata
-    );
+    for (const chunk of chunks) {
+      await this.#vectorDBStore.insertToDB(chunk, parsedDocument.metadata)
+    }
+    // await this.#vectorDBStore.insertToDB(
+    //   parsedDocument.text,
+    //   parsedDocument.metadata
+    // );
   } 
 }
