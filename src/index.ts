@@ -21,7 +21,9 @@ const llm = new LLM(modelName)
 const orchestrator = new RAGOrchestrator(ingestion, llm /*, retrieval */)
 
 // Preprocessing step: ingestion of documents, parsing and storing in the vector DB
-orchestrator.runIngestionPipeline()
+await orchestrator.runIngestionPipeline()
+const allDocs = await vectorDBStore.getAllDocuments();
+console.log("ALL DOCUMENTS:", allDocs);
 
 // Run the experiments
 // orchestrator.runRetrievalPipeline(PROMPT_FIRST_EXPERIMENT);

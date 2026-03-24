@@ -26,12 +26,21 @@ export class DocumentIngestion {
     // TODO: call the parser and preprocesser here
     // TODO: add check here to determine the type of document (e.g. PDF, text) and call the appropriate parsing function
     // const parsedDocument = await parsePDF(rawDocument)
-      const parser = getParser(rawDocument)
-      const parsedDocument = await parser(rawDocument)
+    const parser = getParser(rawDocument)
+    const parsedDocument = await parser(rawDocument)
 
-      console.log('Parsed document:', parsedDocument)
+    console.log('Parsed document:', parsedDocument)
 
+    // Fallback if the parser fails to extract text content, we can skip the document or handle it differently based on the use case
+    if (!parsedDocument.text || !parsedDocument.text.trim()) {
+      console.warn(`Skipping document with empty text: ${rawDocument}`)
+      return
+    }
 
     // await this.#vectorDBStore.insertToDB(parsedDocument.text, parsedDocument.metadata);
-  }
+    await this.#vectorDBStore.insertToDB(
+      parsedDocument.text,
+      parsedDocument.metadata
+    );
+  } 
 }

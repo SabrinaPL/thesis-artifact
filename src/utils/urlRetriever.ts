@@ -4,6 +4,8 @@ dotenv.config()
 
 export function retrieveDocumentURLs(): string[] {
   const urls = JSON.parse(process.env.DOCUMENT_URLS || '[]')
+  // const urls = JSON.parse(process.env.DOCUMENTS || '[]')
+  console.log('Retrieving document URLs from environment variable:', process.env.DOCUMENT_URLS)
 
   if (!Array.isArray(urls)) {
     throw new Error(
