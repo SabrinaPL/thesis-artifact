@@ -26,8 +26,8 @@ export class RAGOrchestrator {
     this.#LLMInstance = llmInstance
   }
 
-  runIngestionPipeline() {
-    this.#ingestDocuments()
+  async runIngestionPipeline() {
+    await this.#ingestDocuments()
   }
 
   // runRetrievalPipeline(query: string) {}
