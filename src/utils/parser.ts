@@ -11,12 +11,20 @@ export async function parsePDF(url: string) {
 
   try {
     const metadata = await parser.getInfo()
-    const text = await parser.getText()
-    const parsedDocument = { text: text, metadata: metadata }
+    const textResult = await parser.getText()
+
+    const parsedDocument = { 
+      text: textResult.text,
+      metadata: metadata,
+    }
 
     return parsedDocument
   } catch (error) {
     console.error('Error parsing PDF document:', error)
+    throw error
+  } finally {
+    // Clean up parser after parsing is done
+    await parser.destroy().catch(() => {})
     // TODO: add error handling logic
   }
 }

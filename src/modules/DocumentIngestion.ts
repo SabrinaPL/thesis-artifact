@@ -1,6 +1,7 @@
 // TODO: add logic herer to handle document ingestion including parsing and preprocessing of documents, communication with the VectorDBStore to store the vector embeddings etc.
 import type { VectorDBStoreInterface } from '../types/VectorDBStoreInterface.js'
-import { parsePDF } from '../utils/parser.js'
+// import { parsePDF } from '../utils/parser.js'
+import { getParser } from '../utils/parserSelector.js'
 import { retrieveDocumentURLs } from '../utils/urlRetriever.js'
 
 /**
@@ -24,7 +25,12 @@ export class DocumentIngestion {
   async ingestDocument(rawDocument: string) {
     // TODO: call the parser and preprocesser here
     // TODO: add check here to determine the type of document (e.g. PDF, text) and call the appropriate parsing function
-    const parsedDocument = await parsePDF(rawDocument)
+    // const parsedDocument = await parsePDF(rawDocument)
+      const parser = getParser(rawDocument)
+      const parsedDocument = await parser(rawDocument)
+
+      console.log('Parsed document:', parsedDocument)
+
 
     // await this.#vectorDBStore.insertToDB(parsedDocument.text, parsedDocument.metadata);
   }
