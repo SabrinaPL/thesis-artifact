@@ -1,1 +1,1 @@
-// TODO: add text chunking logic, after deciding on the chunking strategy (e.g., sentence-based, paragraph-based, fixed-size chunks, etc.)
+// TODO: add text chunking logic - use sentence-level chunking strategy (best practice, Wang et al. 2024)
