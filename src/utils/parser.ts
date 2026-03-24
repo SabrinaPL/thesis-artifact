@@ -5,7 +5,7 @@ export async function parsePDF(url: string) {
   console.log('Parsing PDF document from URL:', url)
 
   // TODO: extract metadata from the PDF document
-  const parser = new PDFParse(url)
+  const parser = new PDFParse({ url })
 
   try {
     const metadata = await parser.getInfo()
