@@ -3,6 +3,7 @@ import { VectorDBStore } from './repositories/VectorDBStore.js'
 import { DocumentIngestion } from './modules/DocumentIngestion.js'
 // import { DocumentRetrieval } from './modules/DocumentRetrieval.js';
 import { LLM } from './modules/LLM.js'
+import { connectDB } from './config/db.js'
 // import {
 //   PROMPT_FIRST_EXPERIMENT,
 //   PROMPT_SECOND_EXPERIMENT,
@@ -19,6 +20,9 @@ const ingestion = new DocumentIngestion(vectorDBStore)
 // const retrieval = new DocumentRetrieval(vectorDBStore);
 const llm = new LLM(modelName)
 const orchestrator = new RAGOrchestrator(ingestion, llm /*, retrieval */)
+
+// Connect to the database before running the ingestion pipeline
+await connectDB()
 
 // Preprocessing step: ingestion of documents, parsing and storing in the vector DB
 await orchestrator.runIngestionPipeline()
