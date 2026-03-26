@@ -7,6 +7,7 @@ import { chromium, type Browser } from 'playwright'
 let _browser: Browser | null = null
 
 export async function initBrowser() {
+  if (_browser) return
   _browser = await chromium.launch({ headless: true })
 }
 
@@ -67,6 +68,15 @@ async function parseHTMLStatic(url: string): Promise<ParsedDocument | null> {
 
   if (!response.ok) {
     throw new Error(`Failed to fetch HTML document: ${response.status}`)
+  }
+
+  // If the server returns a PDF despite the URL not ending in .pdf, delegate to parsePDF
+  const contentType = response.headers.get('content-type') ?? ''
+
+  if (contentType.includes('application/pdf')) {
+    console.log(`URL serves a PDF (detected from content-type), delegating to PDF parser: ${url}`)
+
+    return parsePDF(url)
   }
 
   const html = await response.text()
