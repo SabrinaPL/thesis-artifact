@@ -74,7 +74,8 @@ async function parseHTMLStatic(url: string): Promise<ParsedDocument | null> {
 
   if (text.length < MIN_STATIC_TEXT_LENGTH) {
     console.log(`Static parse yielded insufficient text (${text.length} chars), will fall back to browser: ${url}`)
-    return null
+
+    return null // TODO: returning null is bad practice, just added it for now - replace with error handling logic later
   }
 
   return {
