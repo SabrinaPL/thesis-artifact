@@ -1,7 +1,7 @@
 import { PDFParse } from 'pdf-parse'
 import { Readability } from '@mozilla/readability' // Chosen for its ability to extract main content from HTML documents (and reduce noise from ads, navigation etc)
 import { JSDOM } from 'jsdom'
-import type { ParsedDocument } from '../types/ParsedDocumentType.js'
+import type { ParsedDocument } from '../types/DocumentType.js'
 import { chromium, type Browser } from 'playwright'
 
 let _browser: Browser | null = null

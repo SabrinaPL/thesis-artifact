@@ -1,4 +1,6 @@
+import type { DocumentEntry } from './DocumentType.js'
+
 export interface DocumentIngestionInterface {
   ingestDocuments(): Promise<void>
-  ingestDocument(rawDocument: string): Promise<void>
+  ingestDocument(document: DocumentEntry): Promise<void>
 }

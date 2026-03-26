@@ -1,7 +1,8 @@
 // TODO: add logic herer to handle document ingestion including parsing and preprocessing of documents, communication with the VectorDBStore to store the vector embeddings etc.
 import type { VectorDBStoreInterface } from '../types/VectorDBStoreInterface.js'
+import type { DocumentEntry } from '../types/DocumentType.js'
 import { getParser } from '../utils/parserSelector.js'
-import { retrieveDocumentURLs } from '../utils/urlRetriever.js'
+import { retrieveDocuments } from '../utils/urlRetriever.js'
 import { chunkText } from '../utils/textChunker.js'
 import { createEmbedding } from '../utils/embedder.js'
 import { initBrowser, closeBrowser } from '../utils/parser.js'
@@ -17,33 +18,33 @@ export class DocumentIngestion {
   }
 
   async ingestDocuments() {
-    const documentURLs = retrieveDocumentURLs()
+    const documents = retrieveDocuments()
 
     await initBrowser()
     try {
-      for (const rawDocument of documentURLs) {
-        await this.ingestDocument(rawDocument)
+      for (const document of documents) {
+        await this.ingestDocument(document)
       }
     } finally {
       await closeBrowser()
     }
   }
 
-  async ingestDocument(rawDocument: string) {
+  async ingestDocument(document: DocumentEntry) {
     // TODO: call the parser and preprocesser here
     // TODO: add check here to determine the type of document (e.g. PDF, text) and call the appropriate parsing function
     // const parsedDocument = await parsePDF(rawDocument)
-    const parser = await getParser(rawDocument)
-    const parsedDocument = await parser(rawDocument)
+    const parser = await getParser(document.url)
+    const parsedDocument = await parser(document.url)
 
     // Fallback if the parser fails to extract text content, we can skip the document or handle it differently based on the use case
     if (!parsedDocument.text || !parsedDocument.text.trim()) {
-      console.warn(`Skipping document with empty text: ${rawDocument}`)
+      console.warn(`Skipping document with empty text: ${document.url}`)
       return
     }
 
     const chunks = chunkText(parsedDocument.text)
-    console.log(`Created ${chunks.length} chunks for document: ${rawDocument}`)
+    console.log(`Created ${chunks.length} chunks for document: ${document.url}`)
 
     // await this.#vectorDBStore.insertToDB(parsedDocument.text, parsedDocument.metadata);
 
@@ -65,10 +66,13 @@ export class DocumentIngestion {
         embedding,
         {
           ...parsedDocument.metadata,
-          source: rawDocument,
+          source: document.url,
+          category: document.category,
+          description: document.description,
           chunkIndex: index,
         }
       )
     }
   }
 }
+
