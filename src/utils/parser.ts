@@ -15,7 +15,6 @@ export async function closeBrowser() {
   _browser = null
 }
 
-// export async function parsePDF(url: string) {
 export async function parsePDF(url: string): Promise<ParsedDocument> {
   console.log('Parsing PDF document from URL:', url)
 
@@ -30,7 +29,7 @@ export async function parsePDF(url: string): Promise<ParsedDocument> {
       metadata: metadata as unknown as Record<string, unknown>,
     }
 
-    console.log('Parsed PDF document text:', parsedDocument.text)
+    // console.log('Parsed PDF document text:', parsedDocument.text)
 
     return parsedDocument
   } catch (error) {
@@ -43,46 +42,96 @@ export async function parsePDF(url: string): Promise<ParsedDocument> {
   }
 }
 
-// Refactored version of parseHTMLDocument, using Playwright to load the page and JSDOM + Readability to extract main content and title (reducing noise from ads, nav etc and improving quality of extracted text for embedding generation and retrieval)
-export async function parseHTMLDocument(url: string): Promise<ParsedDocument> {
-  console.log('Parsing HTML document from URL:', url)
+// Minimum text length to consider a static parse successful
+const MIN_STATIC_TEXT_LENGTH = 200 // TODO: adjust this threshodl?
 
+function extractReadabilityContent(html: string, url: string): { text: string; title: string } {
+  const dom = new JSDOM(html, { url })
+  const reader = new Readability(dom.window.document)
+  const article = reader.parse()
+
+  const fallbackText = dom.window.document.body?.textContent?.trim() ?? ''
+  const text = article?.textContent?.trim() || fallbackText
+  const title = article?.title || dom.window.document.title || 'Untitled document'
+
+  return { text, title }
+}
+
+async function parseHTMLStatic(url: string): Promise<ParsedDocument | null> {
+  const response = await fetch(url, {
+    headers: {
+      'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    },
+  })
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch HTML document: ${response.status}`)
+  }
+
+  const html = await response.text()
+  const { text, title } = extractReadabilityContent(html, url)
+
+  if (text.length < MIN_STATIC_TEXT_LENGTH) {
+    console.log(`Static parse yielded insufficient text (${text.length} chars), will fall back to browser: ${url}`)
+    return null
+  }
+
+  return {
+    text,
+    metadata: { title, source: url },
+  }
+}
+
+async function parseHTMLWithBrowser(url: string): Promise<ParsedDocument> {
   if (!_browser) {
-    throw new Error('Browser not initialized. Call initBrowser() before parsing HTML documents.')
+    _browser = await chromium.launch({ headless: true })
   }
 
   const page = await _browser.newPage()
 
   try {
-    await page.goto(url, {
-      waitUntil: 'domcontentloaded',
-      timeout: 60000,
-    })
-
-    // Wait for body to be present so JS-rendered content has a chance to settle
-    await page.waitForSelector('body', { timeout: 10000 })
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 })
+    // Allow time for JS-rendered content to settle after the DOM is ready
+    await page.waitForTimeout(3000)
 
     const html = await page.content()
-
-    const dom = new JSDOM(html, { url })
-    const reader = new Readability(dom.window.document)
-    const article = reader.parse()
-
-    const fallbackText = dom.window.document.body?.textContent?.trim() ?? ''
-    const finalText = article?.textContent?.trim() || fallbackText
-    const finalTitle = article?.title || dom.window.document.title || 'Untitled document'
+    const { text, title } = extractReadabilityContent(html, url)
 
     return {
-      text: finalText,
-      metadata: {
-        title: finalTitle,
-        source: url,
-      },
+      text,
+      metadata: { title, source: url },
     }
-  } catch (error) {
-    console.error('Error parsing HTML document:', error)
-    throw error
   } finally {
     await page.close()
+  }
+}
+
+// Parses an HTML page using a two-stage strategy:
+// 1. Static fetch + JSDOM + Readability.
+// 2. Playwright fallback - used only when the static parse yields too little text,
+//    which indicates a client-side rendered page whose content only exists after JS execution.
+export async function parseHTMLDocument(url: string): Promise<ParsedDocument> {
+  console.log('Parsing HTML document from URL:', url)
+
+  try {
+    const staticResult = await parseHTMLStatic(url)
+
+    if (staticResult) {
+      console.log(`Static parse succeeded for: ${url}`)
+
+      return staticResult
+    }
+  } catch (error) {
+    console.warn(`Static parse failed, falling back to browser: ${url}`, error)
+  }
+
+  console.log(`Falling back to browser-based parsing for: ${url}`)
+  try {
+    return await parseHTMLWithBrowser(url)
+  } catch (error) {
+    console.error('Error parsing HTML document with browser:', error)
+
+    throw error
   }
 }

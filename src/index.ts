@@ -23,7 +23,7 @@ const ingestion = new DocumentIngestion(vectorDBStore)
 const orchestrator = new RAGOrchestrator(ingestion)
 
 // Connect to the database before running the ingestion pipeline
-await connectDB()
+// await connectDB()
 
 // Preprocessing step: ingestion of documents, parsing and storing in the vector DB
 await orchestrator.runIngestionPipeline()

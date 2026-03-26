@@ -5,7 +5,7 @@ import { getParser } from '../utils/parserSelector.js'
 import { retrieveDocuments } from '../utils/urlRetriever.js'
 import { chunkText } from '../utils/textChunker.js'
 import { createEmbedding } from '../utils/embedder.js'
-import { initBrowser, closeBrowser } from '../utils/parser.js'
+import { closeBrowser } from '../utils/parser.js'
 
 /**
  * DocumentIngestion class is responsible for handling the ingestion of documents into the system. It retrieves the document URLs, parses and preprocesses the documents, and communicates with the VectorDBStore to store the vector embeddings of the documents.
@@ -20,12 +20,16 @@ export class DocumentIngestion {
   async ingestDocuments() {
     const documents = retrieveDocuments()
 
-    await initBrowser()
     try {
       for (const document of documents) {
-        await this.ingestDocument(document)
+        try {
+          await this.ingestDocument(document)
+        } catch (error) {
+          console.error(`Failed to ingest document, skipping: ${document.url}`, error)
+        }
       }
     } finally {
+      // TODO: do we want to close the browser after each document or keep it open for the entire ingestion process (if there are many documents, it might be more efficient to keep it open and reuse it across documents, but we also need to consider resource usage and potential memory leaks)?
       await closeBrowser()
     }
   }
@@ -37,9 +41,10 @@ export class DocumentIngestion {
     const parser = await getParser(document.url)
     const parsedDocument = await parser(document.url)
 
-    // Fallback if the parser fails to extract text content, we can skip the document or handle it differently based on the use case
+    // Fallback if the parser fails to extract text content
     if (!parsedDocument.text || !parsedDocument.text.trim()) {
       console.warn(`Skipping document with empty text: ${document.url}`)
+
       return
     }
 
@@ -50,8 +55,9 @@ export class DocumentIngestion {
 
     // insert each chunk into the vector DB with its corresponding embedding and metadata 
     // (including source document and chunk index for traceability)
-    for (const [index, chunk] of chunks.entries()) {
-      const embedding = await createEmbedding(chunk)
+
+    // for (const [index, chunk] of chunks.entries()) {
+    //   const embedding = await createEmbedding(chunk)
 
       // // Use a unique chunk key to prevent duplicates in the database
       // // TODO: consider using a more robust method for generating unique chunk keys, 
@@ -60,19 +66,19 @@ export class DocumentIngestion {
       // // Or consider replacing the existing chunks with same resource and reingest
       // const chunkKey = `${rawDocument}::${index}`
 
-      await this.#vectorDBStore.insertToDB(
-        // chunkKey,
-        chunk,
-        embedding,
-        {
-          ...parsedDocument.metadata,
-          source: document.url,
-          category: document.category,
-          description: document.description,
-          chunkIndex: index,
-        }
-      )
-    }
+    //   await this.#vectorDBStore.insertToDB(
+    //     // chunkKey,
+    //     chunk,
+    //     embedding,
+    //     {
+    //       ...parsedDocument.metadata,
+    //       source: document.url,
+    //       category: document.category,
+    //       description: document.description,
+    //       chunkIndex: index,
+    //     }
+    //   )
+    // }
   }
 }
 
