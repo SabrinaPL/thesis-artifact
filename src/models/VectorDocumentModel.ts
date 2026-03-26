@@ -9,6 +9,7 @@ if (!collectionName) {
   throw new Error('MONGODB_COLLECTION is not defined in environment variables')
 }
 
+// TODO: do we want to update the schema to include additional top-level fields (for easy querying), like source, category, description, chunkIndex? Instead of nesting them all under metadata?
 const VectorDocumentSchema = new mongoose.Schema(
   {
     // chunkKey: {

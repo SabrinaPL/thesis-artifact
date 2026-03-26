@@ -1,22 +1,17 @@
-// TODO: add text chunking logic - use sentence-level chunking strategy (best practice, Wang et al. 2024)
+// Sentence-level chunking strategy (best practice, Wang et al. 2024)
+// Uses sbd (Sentence Boundary Detection) for accurate splitting - handles abbreviations,
+// honorifics, decimals etc. that break naive regex-based approaches.
+import sbd from 'sbd'
+
 /**
- * This function takes a long text and splits it into smaller chunks based on sentence boundaries. 
- * It ensures that each chunk does not exceed the specified maximum length while 
- * maintaining the integrity of sentences. 
- * Additionally, it includes an overlap of sentences between adjacent chunks 
- * to preserve context for downstream tasks such as embedding generation and retrieval.
- * 
- * Sentence-level chunking:
- * 1. Split text into sentences
- * 2. Build chunks from complete sentences
- * 3. Add sentence overlap between adjacent chunks
- * 
+ * Splits text into chunks at sentence boundaries using sbd for accurate detection.
+ * Adjacent chunks overlap by `overlapSentences` sentences to preserve context
+ * across chunk boundaries for embedding generation and retrieval.
+ *
  * @param text - the input text to be chunked
- * @param maxChunkLength - the maximum length of each chunk (default: 1000 characters)
- * @param overlapSentences - the number of sentences to overlap between adjacent chunks (default: 2 sentences)
+ * @param maxChunkLength - max characters per chunk (default: 1000)
+ * @param overlapSentences - sentences to overlap between adjacent chunks (default: 2)
  * @returns an array of text chunks
- * 
- * This function takes a long text and splits it into smaller chunks based on sentence boundaries. It ensures that each chunk does not exceed the specified maximum length while maintaining the integrity of sentences. Additionally, it includes an overlap of sentences between adjacent chunks to preserve context for downstream tasks such as embedding generation and retrieval.
  */
 export function chunkText(
   text: string,
@@ -27,17 +22,9 @@ export function chunkText(
     return []
   }
 
-  // Normalize whitespace a bit first
-  const normalizedText = text
-    .replace(/\s+/g, ' ')
-    .replace(/\n+/g, ' ')
-    .trim()
-
-  // Simple sentence splitting:
-  // split after ., !, ? when followed by whitespace
-  const sentences = normalizedText
-    .split(/(?<=[.!?])\s+/)
-    .map((sentence) => sentence.trim())
+  const sentences = sbd
+    .sentences(text, { newline_boundaries: true })
+    .map((s) => s.trim())
     .filter(Boolean)
 
   if (sentences.length === 0) {
@@ -46,26 +33,24 @@ export function chunkText(
 
   const chunks: string[] = []
   let currentChunk: string[] = []
+  let currentLength = 0
 
   for (const sentence of sentences) {
-    const currentText = currentChunk.join(' ')
-    const candidateText = currentText
-      ? `${currentText} ${sentence}`
-      : sentence
+    const separator = currentChunk.length > 0 ? ' ' : ''
+    const candidateLength = currentLength + separator.length + sentence.length
 
-    // If adding the sentence would exceed the max length,
-    // store current chunk and start a new one
-    if (candidateText.length > maxChunkLength && currentChunk.length > 0) {
+    if (candidateLength > maxChunkLength && currentChunk.length > 0) {
       chunks.push(currentChunk.join(' '))
 
-      // Keep overlap sentences from previous chunk
+      // Seed next chunk with overlap sentences from the previous chunk
       currentChunk = currentChunk.slice(-overlapSentences)
+      currentLength = currentChunk.join(' ').length
     }
 
     currentChunk.push(sentence)
+    currentLength += (currentChunk.length > 1 ? 1 : 0) + sentence.length
   }
 
-  // Push final chunk
   if (currentChunk.length > 0) {
     chunks.push(currentChunk.join(' '))
   }

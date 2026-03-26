@@ -1,15 +1,24 @@
-// TODO: add logic for parsing and preprocessing documents, including handling different formats (e.g. PDF, text) etc.
 import { PDFParse } from 'pdf-parse'
-// import { Readability } from '@mozilla/readability' // Chosen for its ability to extract main content from HTML documents (and reduce noise from ads, navigation etc)
-// import { JSDOM } from 'jsdom' 
-import type { ParsedDocument } from '../types/ParsedDocumentType.js'
-import { chromium } from 'playwright'
+import { Readability } from '@mozilla/readability' // Chosen for its ability to extract main content from HTML documents (and reduce noise from ads, navigation etc)
+import { JSDOM } from 'jsdom'
+import type { ParsedDocument } from '../types/DocumentType.js'
+import { chromium, type Browser } from 'playwright'
 
-// export async function parsePDF(url: string) {
+let _browser: Browser | null = null
+
+export async function initBrowser() {
+  if (_browser) return
+  _browser = await chromium.launch({ headless: true })
+}
+
+export async function closeBrowser() {
+  await _browser?.close()
+  _browser = null
+}
+
 export async function parsePDF(url: string): Promise<ParsedDocument> {
   console.log('Parsing PDF document from URL:', url)
 
-  // TODO: extract metadata from the PDF document
   const parser = new PDFParse({ url })
 
   try {
@@ -18,11 +27,10 @@ export async function parsePDF(url: string): Promise<ParsedDocument> {
 
     const parsedDocument = { 
       text: textResult.text,
-      // metadata: metadata,
       metadata: metadata as unknown as Record<string, unknown>,
     }
 
-    console.log('Parsed PDF document text:', parsedDocument.text)
+    // console.log('Parsed PDF document text:', parsedDocument.text)
 
     return parsedDocument
   } catch (error) {
@@ -35,94 +43,108 @@ export async function parsePDF(url: string): Promise<ParsedDocument> {
   }
 }
 
-// TODO: implement text parser logic here, including handling of different text formats, extraction of relevant information etc.
-// export async function parseHTMLDocument(url: string) {
-// export async function parseHTMLDocument(url: string): Promise<ParsedDocument> {
-//   console.log('Parsing HTML document from URL:', url)
+// Minimum text length to consider a static parse successful
+const MIN_STATIC_TEXT_LENGTH = 200 // TODO: adjust this threshodl?
 
-//   try {
-//     const response = await fetch(url, {
-//       headers: {
-//         'User-Agent':
-//           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-//       },
-//     });
+function extractReadabilityContent(html: string, url: string): { text: string; title: string } {
+  const dom = new JSDOM(html, { url })
+  const reader = new Readability(dom.window.document)
+  const article = reader.parse()
 
-//     if (!response.ok) {
-//       throw new Error(`Failed to fetch HTML document: ${response.status}`)
-//     }
+  const fallbackText = dom.window.document.body?.textContent?.trim() ?? ''
+  const text = article?.textContent?.trim() || fallbackText
+  const title = article?.title || dom.window.document.title || 'Untitled document'
 
-//     const html = await response.text();
-//     const dom = new JSDOM(html, { url });
-//     const reader = new Readability(dom.window.document);
-//     const article = reader.parse();
+  dom.window.close()
 
-//     const fallbackText = dom.window.document.body.textContent?.trim() ?? ''
-//     const finalText = article?.textContent?.trim() || fallbackText
-//     const finalTitle =
-//       article?.title ?? dom.window.document.title ?? 'Untitled document'
+  return { text, title }
+}
 
-//     console.log('HTML title:', finalTitle)
-//     console.log('HTML text length:', finalText.length)
+async function parseHTMLStatic(url: string): Promise<ParsedDocument | null> {
+  const response = await fetch(url, {
+    headers: {
+      'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    },
+  })
 
-//     return {
-//       text: finalText,
-//       metadata: {
-//         title: finalTitle,
-//         source: url,
-//       },
-//     }
-//   } catch (error) {
-//     console.error('Error parsing HTML document:', error)
-//     throw error
-//   }
+  if (!response.ok) {
+    throw new Error(`Failed to fetch HTML document: ${response.status}`)
+  }
 
-//     // console.log('Parsed article object:', article)
-//     // console.log('Parsed HTML document text:', article?.textContent)
-//     // console.log('Parsed HTML document title:', article?.title)
+  // If the server returns a PDF despite the URL not ending in .pdf, delegate to parsePDF
+  const contentType = response.headers.get('content-type') ?? ''
 
-//   //   const text = article?.textContent ?? dom.window.document.body?.textContent ?? '';
-//   //   const title = article?.title ?? dom.window.document.title;
+  if (contentType.includes('application/pdf')) {
+    console.log(`URL serves a PDF (detected from content-type), delegating to PDF parser: ${url}`)
 
-//   //   return { text, metadata: { title } };
-//   // } catch (error) {
-//   //   console.error('Error parsing HTML document:', error)
-//   //   // TODO: add error handling logic
-//   // }
-// }
+    return parsePDF(url)
+  }
 
-export async function parseHTMLDocument(url: string): Promise<ParsedDocument> {
-  console.log('Parsing HTML document with Playwright from URL:', url)
+  const html = await response.text()
+  const { text, title } = extractReadabilityContent(html, url)
 
-  const browser = await chromium.launch({ headless: true })
+  if (text.length < MIN_STATIC_TEXT_LENGTH) {
+    console.log(`Static parse yielded insufficient text (${text.length} chars), will fall back to browser: ${url}`)
+
+    return null // TODO: returning null is bad practice, just added it for now - replace with error handling logic later
+  }
+
+  return {
+    text,
+    metadata: { title, source: url },
+  }
+}
+
+async function parseHTMLWithBrowser(url: string): Promise<ParsedDocument> {
+  if (!_browser) {
+    _browser = await chromium.launch({ headless: true })
+  }
+
+  const page = await _browser.newPage()
 
   try {
-    const page = await browser.newPage()
-
-    await page.goto(url, {
-      waitUntil: 'domcontentloaded',
-      timeout: 60000,
-    })
-
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 })
+    // Allow time for JS-rendered content to settle after the DOM is ready
     await page.waitForTimeout(3000)
-    
-    const title = await page.title()
 
-    const text = await page.evaluate(() => {
-      return document.body?.innerText?.trim() ?? ''
-    })
+    const html = await page.content()
+    const { text, title } = extractReadabilityContent(html, url)
 
     return {
       text,
-      metadata: {
-        title,
-        source: url,
-      },
+      metadata: { title, source: url },
+    }
+  } finally {
+    await page.close()
+  }
+}
+
+// Parses an HTML page using a two-stage strategy:
+// 1. Static fetch + JSDOM + Readability.
+// 2. Playwright fallback - used only when the static parse yields too little text,
+//    which indicates a client-side rendered page whose content only exists after JS execution.
+export async function parseHTMLDocument(url: string): Promise<ParsedDocument> {
+  console.log('Parsing HTML document from URL:', url)
+
+  try {
+    const staticResult = await parseHTMLStatic(url)
+
+    if (staticResult) {
+      console.log(`Static parse succeeded for: ${url}`)
+
+      return staticResult
     }
   } catch (error) {
-    console.error('Error parsing HTML document:', error)
+    console.warn(`Static parse failed, falling back to browser: ${url}`, error)
+  }
+
+  console.log(`Falling back to browser-based parsing for: ${url}`)
+  try {
+    return await parseHTMLWithBrowser(url)
+  } catch (error) {
+    console.error('Error parsing HTML document with browser:', error)
+
     throw error
-  } finally {
-    await browser.close()
   }
 }
