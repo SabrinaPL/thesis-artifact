@@ -55,6 +55,8 @@ function extractReadabilityContent(html: string, url: string): { text: string; t
   const text = article?.textContent?.trim() || fallbackText
   const title = article?.title || dom.window.document.title || 'Untitled document'
 
+  dom.window.close()
+
   return { text, title }
 }
 
