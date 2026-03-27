@@ -1,6 +1,6 @@
 import type { DocumentIngestionInterface } from '../types/DocumentIngestionInterface.js'
 // import type { LLMInterface } from '../types/LLMInterface.js'
-// import { SELF_EVAL_PROMPT } from "../prompts/selfEvalPrompt.js"; // TODO: maybe it's better to move the import of the internal self-eval prompt to the DocumentRetrieval module?
+// import { SELF_EVAL_PROMPT } from "../prompts/selfEvalPrompt.js";
 
 /**
  * RAGOrchestrator class is responsible for orchestrating the Retrieval-Augmented Generation (RAG) process.
@@ -30,19 +30,25 @@ export class RAGOrchestrator {
     await this.#ingestDocuments()
   }
 
-  // runRetrievalPipeline(query: string) {}
+  // async runRetrievalPipeline(query: string) {
+
+  // }
+
+  // async runRetrievalPipelineSelfEval() {
+
+  // }
 
   async #ingestDocuments() {
     await this.#ingestionInstance.ingestDocuments()
   }
 
-  // #retrieve(query: string) {}
+  // #retrieveDocuments(query: string) {}
 
-  // #generate(context: string, query: string) {
+  // #generateIaC(query: string, retrievedChunks: string) {
   //     this.#LLMInstance.generate(context, query);
   // }
 
-  // #retrieveSelfEvaluate(SELF_EVAL_PROMPT, generatedIaC: string) {}
+  // #retrieveSelfEvaluate(selfEvalPrompt: string) {}
 
-  // #generateSelfEvaluate(context: string, query: string, generatedIaC: string) {}
+  // #generateSelfEvaluate(selfEvalPrompt: string, generatedIaC: string, originalQuery: string) {}
 }
