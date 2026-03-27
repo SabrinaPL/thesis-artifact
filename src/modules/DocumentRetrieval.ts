@@ -1,2 +1,1 @@
 // TODO: add logic here to handle retrieval of documents from the vector DB, via the VectorDBStore, based on the query and context from RAGOrchestrator - then return the retrieved documents
-// TODO: add a summarization step, using abstractive methods that rewrite the context into a compressed form (it is shown to be the most effective, in comparison to extractive methods, according to the study by Wang et. al), before sending to the generator / LLM: summarize the document in relation to the query, then generate IaC from the summary?

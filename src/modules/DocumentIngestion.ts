@@ -75,10 +75,10 @@ export class DocumentIngestion {
     //       source: document.url,
     //       category: document.category,
     //       description: document.description,
+             // TODO: do we want to add more metadata fields here, like title and keywords?
     //       chunkIndex: index,
     //     }
     //   )
     // }
   }
 }
-

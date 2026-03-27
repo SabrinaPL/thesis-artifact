@@ -11,14 +11,11 @@ import { connectDB } from './config/db.js'
 //   PROMPT_FOURTH_EXPERIMENT,
 // } from "./prompts/experimentationPrompts.js";
 
-// Model to be used for the current experiment
-// const modelName = 'gpt-5.2'
-
 // Dependency injection and instantiation of components, to follow the principle of separation of concerns and inversion of control, allowing for better modularity and testability
 const vectorDBStore = new VectorDBStore()
 const ingestion = new DocumentIngestion(vectorDBStore)
 // const retrieval = new DocumentRetrieval(vectorDBStore);
-// const llm = new LLM(modelName)
+// const llm = new LLM()
 // const orchestrator = new RAGOrchestrator(ingestion, llm /*, retrieval */)
 const orchestrator = new RAGOrchestrator(ingestion)
 
