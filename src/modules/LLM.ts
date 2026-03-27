@@ -21,7 +21,7 @@ export class LLM {
       Retrieved context:
       ${context}
 
-      User task:
+      IaC task:
       ${query} // External prompt
     `
 
@@ -37,7 +37,7 @@ export class LLM {
       Retrieved context:
       ${context}
 
-      User task:
+      IaC task:
       ${query} // External prompt
 
       Generated IaC code to be evaluated:

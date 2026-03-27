@@ -1,6 +1,6 @@
 import type { DocumentIngestionInterface } from '../types/DocumentIngestionInterface.js'
 // import type { LLMInterface } from '../types/LLMInterface.js'
-// import { SELF_EVAL_PROMPT } from "../prompts/selfEvalPrompt.js";
+// import { SELF_EVAL_QUERY, SELF_EVAL_PROMPT } from "../prompts/selfEvalPrompts.js";
 
 /**
  * RAGOrchestrator class is responsible for orchestrating the Retrieval-Augmented Generation (RAG) process.
@@ -48,7 +48,7 @@ export class RAGOrchestrator {
   //     this.#LLMInstance.generate(context, query);
   // }
 
-  // #retrieveSelfEvaluate(selfEvalPrompt: string) {}
+  // #retrieveSelfEvaluate(selfEvalQuery: string) {}
 
   // #generateSelfEvaluate(selfEvalPrompt: string, generatedIaC: string, originalQuery: string) {}
 }
