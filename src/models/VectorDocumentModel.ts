@@ -33,10 +33,10 @@ const VectorDocumentSchema = new mongoose.Schema(
   {
     timestamps: true,
     collection: collectionName,
-  }
+  },
 )
 
 export const VectorDocumentModel = mongoose.model(
   'VectorDocument',
-  VectorDocumentSchema
+  VectorDocumentSchema,
 )

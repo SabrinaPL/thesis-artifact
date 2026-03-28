@@ -25,7 +25,7 @@ export async function parsePDF(url: string): Promise<ParsedDocument> {
     const metadata = await parser.getInfo()
     const textResult = await parser.getText()
 
-    const parsedDocument = { 
+    const parsedDocument = {
       text: textResult.text,
       metadata: metadata as unknown as Record<string, unknown>,
     }
@@ -46,14 +46,18 @@ export async function parsePDF(url: string): Promise<ParsedDocument> {
 // Minimum text length to consider a static parse successful
 const MIN_STATIC_TEXT_LENGTH = 200 // TODO: adjust this threshodl?
 
-function extractReadabilityContent(html: string, url: string): { text: string; title: string } {
+function extractReadabilityContent(
+  html: string,
+  url: string,
+): { text: string; title: string } {
   const dom = new JSDOM(html, { url })
   const reader = new Readability(dom.window.document)
   const article = reader.parse()
 
   const fallbackText = dom.window.document.body?.textContent?.trim() ?? ''
   const text = article?.textContent?.trim() || fallbackText
-  const title = article?.title || dom.window.document.title || 'Untitled document'
+  const title =
+    article?.title || dom.window.document.title || 'Untitled document'
 
   dom.window.close()
 
@@ -76,7 +80,9 @@ async function parseHTMLStatic(url: string): Promise<ParsedDocument | null> {
   const contentType = response.headers.get('content-type') ?? ''
 
   if (contentType.includes('application/pdf')) {
-    console.log(`URL serves a PDF (detected from content-type), delegating to PDF parser: ${url}`)
+    console.log(
+      `URL serves a PDF (detected from content-type), delegating to PDF parser: ${url}`,
+    )
 
     return parsePDF(url)
   }
@@ -85,7 +91,9 @@ async function parseHTMLStatic(url: string): Promise<ParsedDocument | null> {
   const { text, title } = extractReadabilityContent(html, url)
 
   if (text.length < MIN_STATIC_TEXT_LENGTH) {
-    console.log(`Static parse yielded insufficient text (${text.length} chars), will fall back to browser: ${url}`)
+    console.log(
+      `Static parse yielded insufficient text (${text.length} chars), will fall back to browser: ${url}`,
+    )
 
     return null // TODO: returning null is bad practice, just added it for now - replace with error handling logic later
   }

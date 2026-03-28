@@ -1,5 +1,8 @@
 // TODO: add logic to determine file type and which parser function to use based on the file type (e.g. PDF, text) etc.
-import { parsePDF, /* parseTextDocument */ parseHTMLDocument } from './parser.js'
+import {
+  parsePDF,
+  /* parseTextDocument */ parseHTMLDocument,
+} from './parser.js'
 import type { ParserFunction } from '../types/ParserInterface.js'
 
 /**

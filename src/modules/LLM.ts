@@ -31,8 +31,13 @@ export class LLM {
       ? response.content
       : JSON.stringify(response.content)
   }
-  
-  async generateSelfEval(context: string, query: string, generatedIaC: string, selfEvalPrompt: string): Promise<string> {
+
+  async generateSelfEval(
+    context: string,
+    query: string,
+    generatedIaC: string,
+    selfEvalPrompt: string,
+  ): Promise<string> {
     const fullPrompt = `
       Retrieved context:
       ${context}
@@ -47,14 +52,14 @@ export class LLM {
       ${selfEvalPrompt}
       `
 
-      const response = await this.#model.invoke(fullPrompt)
+    const response = await this.#model.invoke(fullPrompt)
 
     return typeof response.content === 'string'
       ? response.content
       : JSON.stringify(response.content)
   }
 
-    // return await this.#model.invoke()
+  // return await this.#model.invoke()
 
   // async #generateIaC(context: any, query: string): Promise<any> {
 
