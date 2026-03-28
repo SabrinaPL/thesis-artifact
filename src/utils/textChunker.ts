@@ -16,7 +16,7 @@ import sbd from 'sbd'
 export function chunkText(
   text: string,
   maxChunkLength = 1000,
-  overlapSentences = 2
+  overlapSentences = 2,
 ): string[] {
   if (!text.trim()) {
     return []

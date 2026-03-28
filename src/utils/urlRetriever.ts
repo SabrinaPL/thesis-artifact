@@ -12,7 +12,9 @@ export function retrieveDocuments(): DocumentEntry[] {
   const documents: unknown = JSON.parse(raw)
 
   if (!Array.isArray(documents)) {
-    throw new Error('DOCUMENTS environment variable must be a JSON array of objects.')
+    throw new Error(
+      'DOCUMENTS environment variable must be a JSON array of objects.',
+    )
   }
 
   return documents.map((entry, i) => {
@@ -24,7 +26,7 @@ export function retrieveDocuments(): DocumentEntry[] {
       typeof (entry as Record<string, unknown>).description !== 'string'
     ) {
       throw new Error(
-        `DOCUMENTS entry at index ${i} must have string fields: url, category, description.`
+        `DOCUMENTS entry at index ${i} must have string fields: url, category, description.`,
       )
     }
     return entry as DocumentEntry

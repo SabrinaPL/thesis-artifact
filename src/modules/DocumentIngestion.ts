@@ -25,7 +25,10 @@ export class DocumentIngestion {
         try {
           await this.ingestDocument(document)
         } catch (error) {
-          console.error(`Failed to ingest document, skipping: ${document.url}`, error)
+          console.error(
+            `Failed to ingest document, skipping: ${document.url}`,
+            error,
+          )
         }
       }
     } finally {
@@ -53,18 +56,18 @@ export class DocumentIngestion {
 
     // await this.#vectorDBStore.insertToDB(parsedDocument.text, parsedDocument.metadata);
 
-    // insert each chunk into the vector DB with its corresponding embedding and metadata 
+    // insert each chunk into the vector DB with its corresponding embedding and metadata
     // (including source document and chunk index for traceability)
 
     // for (const [index, chunk] of chunks.entries()) {
     //   const embedding = await createEmbedding(chunk)
 
-      // // Use a unique chunk key to prevent duplicates in the database
-      // // TODO: consider using a more robust method for generating unique chunk keys, 
-      // // such as hashing the chunk content or using a UUID, 
-      // // especially if the same document might be ingested multiple times.
-      // // Or consider replacing the existing chunks with same resource and reingest
-      // const chunkKey = `${rawDocument}::${index}`
+    // // Use a unique chunk key to prevent duplicates in the database
+    // // TODO: consider using a more robust method for generating unique chunk keys,
+    // // such as hashing the chunk content or using a UUID,
+    // // especially if the same document might be ingested multiple times.
+    // // Or consider replacing the existing chunks with same resource and reingest
+    // const chunkKey = `${rawDocument}::${index}`
 
     //   await this.#vectorDBStore.insertToDB(
     //     // chunkKey,
@@ -75,7 +78,7 @@ export class DocumentIngestion {
     //       source: document.url,
     //       category: document.category,
     //       description: document.description,
-             // TODO: do we want to add more metadata fields here, like title and keywords?
+    // TODO: do we want to add more metadata fields here, like title and keywords?
     //       chunkIndex: index,
     //     }
     //   )
