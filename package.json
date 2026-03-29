@@ -23,6 +23,7 @@
     "@eslint/js": "^10.0.1",
     "@types/jsdom": "^28.0.1",
     "@types/node": "^25.4.0",
+    "@types/sbd": "^1.0.5",
     "@vitest/coverage-v8": "^4.0.18",
     "eslint": "^10.1.0",
     "ts-node": "^10.9.2",
@@ -43,6 +44,7 @@
     "openai": "^6.27.0",
     "pdf-parse": "^2.4.5",
     "playwright": "^1.58.2",
-    "prettier": "^3.8.1"
+    "prettier": "^3.8.1",
+    "sbd": "^1.0.19"
   }
 }
