@@ -54,7 +54,6 @@ export class RAGOrchestrator {
   //   await this.#retrievalInstance.retrieveDocuments(query, context)
   // }
 
-
   // #generateIaC(query: string, retrievedChunks: string) {
   //     this.#LLMInstance.generate(context, query);
   // }

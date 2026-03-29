@@ -24,7 +24,7 @@ export async function parsePDF(url: string): Promise<ParsedDocument> {
   try {
     const metadata = await parser.getInfo()
     const textResult = await parser.getText()
-     const title =
+    const title =
       typeof metadata?.info?.Title === 'string' && metadata.info.Title.trim()
         ? metadata.info.Title.trim()
         : 'Untitled document'

@@ -20,7 +20,7 @@ export class VectorDBStore implements VectorDBStoreInterface {
     embedding: number[],
     metadata: Record<string, unknown>,
   ): Promise<void> {
-     const source = metadata.source as string
+    const source = metadata.source as string
     const documentHash = metadata.documentHash as string
     const chunkIndex = metadata.chunkIndex as number
 
@@ -72,21 +72,19 @@ export class VectorDBStore implements VectorDBStoreInterface {
   }
 
   async getDocumentsBySource(source: string): Promise<StoredDocument[]> {
-  const documents = await VectorDocumentModel.find({ source }).lean()
+    const documents = await VectorDocumentModel.find({ source }).lean()
 
-  return documents.map((doc) => ({
-    text: doc.text,
-    embedding: doc.embedding,
-    source: doc.source,
-    documentHash: doc.documentHash,
-    chunkIndex: doc.chunkIndex,
-    metadata: doc.metadata as Record<string, unknown>,
-  }))
-}
+    return documents.map((doc) => ({
+      text: doc.text,
+      embedding: doc.embedding,
+      source: doc.source,
+      documentHash: doc.documentHash,
+      chunkIndex: doc.chunkIndex,
+      metadata: doc.metadata as Record<string, unknown>,
+    }))
+  }
 
-  async upsertSourceDocument(
-    document: IngestedSourceDocument,
-  ): Promise<void> {
+  async upsertSourceDocument(document: IngestedSourceDocument): Promise<void> {
     await IngestedSourceDocumentModel.findOneAndUpdate(
       { source: document.source },
       {

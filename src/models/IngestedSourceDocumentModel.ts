@@ -3,7 +3,8 @@ import dotenv from 'dotenv'
 
 dotenv.config()
 
-const collectionName = process.env.MONGODB_SOURCE_COLLECTION || 'source_documents'
+const collectionName =
+  process.env.MONGODB_SOURCE_COLLECTION || 'source_documents'
 
 const IngestedSourceDocumentSchema = new mongoose.Schema(
   {

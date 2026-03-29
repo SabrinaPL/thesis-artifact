@@ -1,4 +1,4 @@
-import type { StoredDocument } from "./StoredDocument.js"
+import type { StoredDocument } from './StoredDocument.js'
 import type { IngestedSourceDocument } from './IngestedSourceDocument.js'
 
 export interface VectorDBStoreInterface {
@@ -14,7 +14,7 @@ export interface VectorDBStoreInterface {
   getAllDocuments(): Promise<StoredDocument[]>
 
   findDocumentBySource(source: string): Promise<IngestedSourceDocument | null>
-  
+
   getDocumentsBySource(source: string): Promise<StoredDocument[]>
 
   upsertSourceDocument(document: IngestedSourceDocument): Promise<void>
