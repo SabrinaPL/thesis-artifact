@@ -9,4 +9,4 @@ This RAG-artifact is created as part of a scientific study (bachelor's thesis) t
 
 ## Artifact Design
 
-![Artifact Design](./design/Artifact%20design_v2.2.drawio.png)
+![Artifact Design](./design/Artifact%20design_v4.drawio.png)

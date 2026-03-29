@@ -5,7 +5,7 @@ import { VectorDocumentModel } from '../models/VectorDocumentModel.js'
 
 export class VectorDBStore implements VectorDBStoreInterface {
   // #documents: any[]
-  // Use the StoredDocument type since it represents the structure of the documents 
+  // Use the StoredDocument type since it represents the structure of the documents
   // we are storing in the vector DB, including text, embedding, and metadata
   // #documents: StoredDocument[]
 
@@ -15,9 +15,9 @@ export class VectorDBStore implements VectorDBStoreInterface {
 
   async insertToDB(
     // chunkKey: string,
-    text: string, 
-    embedding: number[], 
-    metadata: Record<string, unknown>
+    text: string,
+    embedding: number[],
+    metadata: Record<string, unknown>,
   ): Promise<void> {
     const createdDocument = await VectorDocumentModel.create({
       // chunkKey,

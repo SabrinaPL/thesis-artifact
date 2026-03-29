@@ -1,17 +1,34 @@
 import dotenv from 'dotenv'
+import type { DocumentEntry } from '../types/DocumentType.js'
 
 dotenv.config()
 
-export function retrieveDocumentURLs(): string[] {
-  const urls = JSON.parse(process.env.DOCUMENT_URLS || '[]')
-  // const urls = JSON.parse(process.env.DOCUMENTS || '[]')
-  // console.log('Retrieving document URLs from environment variable:', process.env.DOCUMENT_URLS)
+export function retrieveDocuments(): DocumentEntry[] {
+  const raw = process.env.DOCUMENTS
+  if (!raw) {
+    throw new Error('DOCUMENTS environment variable is not set.')
+  }
 
-  if (!Array.isArray(urls)) {
+  const documents: unknown = JSON.parse(raw)
+
+  if (!Array.isArray(documents)) {
     throw new Error(
-      'DOCUMENT_URLS environment variable must be a JSON array of strings.',
+      'DOCUMENTS environment variable must be a JSON array of objects.',
     )
   }
 
-  return urls
+  return documents.map((entry, i) => {
+    if (
+      typeof entry !== 'object' ||
+      entry === null ||
+      typeof (entry as Record<string, unknown>).url !== 'string' ||
+      typeof (entry as Record<string, unknown>).category !== 'string' ||
+      typeof (entry as Record<string, unknown>).description !== 'string'
+    ) {
+      throw new Error(
+        `DOCUMENTS entry at index ${i} must have string fields: url, category, description.`,
+      )
+    }
+    return entry as DocumentEntry
+  })
 }

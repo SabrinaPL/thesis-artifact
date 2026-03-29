@@ -1,5 +1,3 @@
-// TODO: add logic to handle embedding generation for documents (should this util handle communication / have a dependency with VectorDBStore? Or should it only handle the embedding generation? That would be better separation of concerns, so the DocumentIngestion / DocumentRetrieval can handle the communication with the VectorDBStore (or should this be the responsibility of the orchestrator aswell?)
-// TODO: add logic to handle embedding generation for documents (should this util handle communication / have a dependency with VectorDBStore? Or should it only handle the embedding generation? That would be better separation of concerns, so the DocumentIngestion / DocumentRetrieval can handle the communication with the VectorDBStore (or should this be the responsibility of the orchestrator aswell?)
 import OpenAI from 'openai'
 import dotenv from 'dotenv'
 
@@ -24,7 +22,7 @@ export async function createEmbedding(text: string): Promise<number[]> {
   }
 
   const response = await client.embeddings.create({
-    model: 'text-embedding-3-small',
+    model: process.env.OPENAI_EMBEDDING_MODEL || 'text-embedding-3-small',
     input: text,
   })
 

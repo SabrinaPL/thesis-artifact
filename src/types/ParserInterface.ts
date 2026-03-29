@@ -1,3 +1,3 @@
-import type { ParsedDocument } from './ParsedDocumentType.js'
+import type { ParsedDocument } from './DocumentType.js'
 
 export type ParserFunction = (source: string) => Promise<ParsedDocument>
