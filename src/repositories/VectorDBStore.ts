@@ -2,51 +2,21 @@
 import type { VectorDBStoreInterface } from '../types/VectorDBStoreInterface.js'
 import type { StoredDocument } from '../types/StoredDocument.js'
 import type { IngestedSourceDocument } from '../types/IngestedSourceDocument.js'
-import { VectorDocumentModel } from '../models/VectorDocumentModel.js'
-import { IngestedSourceDocumentModel } from '../models/IngestedSourceDocumentModel.js'
-
-/**
- * Utility function to calculate cosine similarity between two embedding vectors
- * @param a - First embedding vector
- * @param b - Second embedding vector
- * @returns - Cosine similarity score between -1 and 1, where 1 means identical, 0 means orthogonal, and -1 means opposite
- */
-function cosineSimilarity(a: number[], b: number[]): number {
-  if (a.length !== b.length) {
-    throw new Error('Embedding vectors must have the same length')
-  }
-
-  let dotProduct = 0
-  let magnitudeA = 0
-  let magnitudeB = 0
-
-  for (let i = 0; i < a.length; i++) {
-    const valueA = a[i] ?? 0
-    const valueB = b[i] ?? 0
-
-    dotProduct += valueA * valueB
-    magnitudeA += valueA * valueA
-    magnitudeB += valueB * valueB
-  }
-
-  const denominator = Math.sqrt(magnitudeA) * Math.sqrt(magnitudeB)
-
-  if (denominator === 0) {
-    return 0
-  }
-
-  return dotProduct / denominator
-}
+import type { VectorDocumentModelType } from '../models/VectorDocumentModel.js'
+import type { IngestedSourceDocumentModelType } from '../models/IngestedSourceDocumentModel.js'
+import { cosineSimilarity } from '../utils/cosineSimilarityCalculator.js'
 
 export class VectorDBStore implements VectorDBStoreInterface {
-  // #documents: any[]
-  // Use the StoredDocument type since it represents the structure of the documents
-  // we are storing in the vector DB, including text, embedding, and metadata
-  // #documents: StoredDocument[]
+  readonly #vectorDocumentModel: VectorDocumentModelType
+  readonly #ingestedSourceDocumentModel: IngestedSourceDocumentModelType
 
-  // constructor() {
-  //   this.#documents = []
-  // }
+  constructor(
+    vectorDocumentModel: VectorDocumentModelType,
+    ingestedSourceDocumentModel: IngestedSourceDocumentModelType,
+  ) {
+    this.#vectorDocumentModel = vectorDocumentModel
+    this.#ingestedSourceDocumentModel = ingestedSourceDocumentModel
+  }
 
   async insertToDB(
     text: string,
@@ -57,7 +27,7 @@ export class VectorDBStore implements VectorDBStoreInterface {
     const documentHash = metadata.documentHash as string
     const chunkIndex = metadata.chunkIndex as number
 
-    const createdDocument = await VectorDocumentModel.create({
+    const createdDocument = await this.#vectorDocumentModel.create({
       text,
       embedding,
       source,
@@ -70,8 +40,7 @@ export class VectorDBStore implements VectorDBStoreInterface {
   }
 
   async getAllDocuments(): Promise<StoredDocument[]> {
-    // return this.#documents
-    const documents = await VectorDocumentModel.find().lean()
+    const documents = await this.#vectorDocumentModel.find().lean()
 
     return documents.map((doc) => ({
       text: doc.text,
@@ -86,7 +55,7 @@ export class VectorDBStore implements VectorDBStoreInterface {
   async findDocumentBySource(
     source: string,
   ): Promise<IngestedSourceDocument | null> {
-    const doc = await IngestedSourceDocumentModel.findOne({ source }).lean()
+    const doc = await this.#ingestedSourceDocumentModel.findOne({ source }).lean()
 
     if (!doc) {
       return null
@@ -105,7 +74,7 @@ export class VectorDBStore implements VectorDBStoreInterface {
   }
 
   async getDocumentsBySource(source: string): Promise<StoredDocument[]> {
-    const documents = await VectorDocumentModel.find({ source }).lean()
+    const documents = await this.#vectorDocumentModel.find({ source }).lean()
 
     return documents.map((doc) => ({
       text: doc.text,
@@ -118,7 +87,7 @@ export class VectorDBStore implements VectorDBStoreInterface {
   }
 
   async upsertSourceDocument(document: IngestedSourceDocument): Promise<void> {
-    await IngestedSourceDocumentModel.findOneAndUpdate(
+    await this.#ingestedSourceDocumentModel.findOneAndUpdate(
       { source: document.source },
       {
         source: document.source,
@@ -140,7 +109,7 @@ export class VectorDBStore implements VectorDBStoreInterface {
   }
 
   async deleteDocumentsBySource(source: string): Promise<void> {
-    await VectorDocumentModel.deleteMany({ source })
+    await this.#vectorDocumentModel.deleteMany({ source })
     console.log(`Deleted old chunks for source: ${source}`)
   }
 

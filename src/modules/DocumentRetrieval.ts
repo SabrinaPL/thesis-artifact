@@ -21,13 +21,17 @@
 import type { VectorDBStoreInterface } from '../types/VectorDBStoreInterface.js'
 import type { GeneratedIaC } from '../types/GeneratedIaC.js'
 import type { StoredDocument } from '../types/StoredDocument.js'
-import { createEmbedding } from '../utils/embedder.js'
 
 export class DocumentRetrieval {
   #vectorDBStore: VectorDBStoreInterface
+  #embedder: (text: string) => Promise<number[]>
 
-  constructor(vectorDBStore: VectorDBStoreInterface) {
+  constructor(
+    vectorDBStore: VectorDBStoreInterface,
+    embedder: (text: string) => Promise<number[]>,
+  ) {
     this.#vectorDBStore = vectorDBStore
+    this.#embedder = embedder
   }
 
   async retrieveDocuments(
@@ -35,7 +39,7 @@ export class DocumentRetrieval {
     context = '',
   ): Promise<StoredDocument[]> {
     const retrievalInput = `${query}\n${context}`.trim()
-    const queryEmbedding = await createEmbedding(retrievalInput)
+    const queryEmbedding = await this.#embedder(retrievalInput)
 
     const relevantDocuments =
       await this.#vectorDBStore.searchSimilarDocuments(queryEmbedding, 5)
@@ -48,7 +52,7 @@ export class DocumentRetrieval {
     originalQuery: string,
   ): Promise<StoredDocument[]> {
     const retrievalInput = `${originalQuery}\n${generatedIaC.content}`.trim()
-    const queryEmbedding = await createEmbedding(retrievalInput)
+    const queryEmbedding = await this.#embedder(retrievalInput)
 
     const relevantDocuments =
       await this.#vectorDBStore.searchSimilarDocuments(queryEmbedding, 5)

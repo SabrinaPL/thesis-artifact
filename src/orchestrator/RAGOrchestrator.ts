@@ -2,7 +2,7 @@ import type { DocumentIngestionInterface } from '../types/DocumentIngestionInter
 import type { DocumentRetrievalInterface } from '../types/DocumentRetrievalInterface.js'
 import type { GeneratedIaC } from '../types/GeneratedIaC.js'
 import type { StoredDocument } from '../types/StoredDocument.js'
-// import type { LLMInterface } from '../types/LLMInterface.js'
+import type { LLMInterface } from '../types/LLMInterface.js'
 // import { SELF_EVAL_QUERY, SELF_EVAL_PROMPT } from "../prompts/selfEvalPrompts.js";
 
 /**
@@ -20,16 +20,16 @@ export class RAGOrchestrator {
   // #generatedIaCSelfEvaluated: string | null;
   #ingestionInstance: DocumentIngestionInterface
   #retrievalInstance: DocumentRetrievalInterface
-  // #LLMInstance: LLMInterface
+  #LLMInstance: LLMInterface
 
   constructor(
     ingestionInstance: DocumentIngestionInterface,
     retrievalInstance: DocumentRetrievalInterface,
-    // llmInstance: LLMInterface
+    llmInstance: LLMInterface
   ) {
     this.#ingestionInstance = ingestionInstance
     this.#retrievalInstance = retrievalInstance
-    // this.#LLMInstance = llmInstance
+    this.#LLMInstance = llmInstance
   }
 
   async runIngestionPipeline() {

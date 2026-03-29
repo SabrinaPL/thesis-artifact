@@ -45,3 +45,5 @@ export const IngestedSourceDocumentModel = mongoose.model(
   'IngestedSourceDocument',
   IngestedSourceDocumentSchema,
 )
+
+export type IngestedSourceDocumentModelType = typeof IngestedSourceDocumentModel

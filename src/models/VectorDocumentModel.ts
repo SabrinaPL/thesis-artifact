@@ -50,3 +50,5 @@ export const VectorDocumentModel = mongoose.model(
   'VectorDocument',
   VectorDocumentSchema,
 )
+
+export type VectorDocumentModelType = typeof VectorDocumentModel
