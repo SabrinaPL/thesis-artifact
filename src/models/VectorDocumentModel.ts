@@ -24,6 +24,20 @@ const VectorDocumentSchema = new mongoose.Schema(
       type: [Number],
       required: true,
     },
+     source: {
+      type: String,
+      required: true,
+      index: true,
+    },
+    documentHash: {
+      type: String,
+      required: true,
+      index: true,
+    },
+    chunkIndex: {
+      type: Number,
+      required: true,
+    },
     metadata: {
       type: mongoose.Schema.Types.Mixed,
       required: true,

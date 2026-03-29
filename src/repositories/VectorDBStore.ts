@@ -19,6 +19,10 @@ export class VectorDBStore implements VectorDBStoreInterface {
     embedding: number[], 
     metadata: Record<string, unknown>
   ): Promise<void> {
+    const source = metadata.source as string
+    const documentHash = metadata.documentHash as string
+    const chunkIndex = metadata.chunkIndex as number
+    
     const createdDocument = await VectorDocumentModel.create({
       // chunkKey,
       text,
@@ -46,5 +50,24 @@ export class VectorDBStore implements VectorDBStoreInterface {
       embedding: doc.embedding,
       metadata: doc.metadata as Record<string, unknown>,
     }))
+  }
+
+  async findDocumentBySource(source: string): Promise<StoredDocument | null> {
+    const doc = await VectorDocumentModel.findOne({ source }).lean()
+
+    if (!doc) {
+      return null
+    }
+
+    return {
+      text: doc.text,
+      embedding: doc.embedding,
+      metadata: doc.metadata as Record<string, unknown>,
+    }
+  }
+
+  async deleteDocumentsBySource(source: string): Promise<void> {
+    await VectorDocumentModel.deleteMany({ source })
+    console.log(`Deleted old chunks for source: ${source}`)
   }
 }
