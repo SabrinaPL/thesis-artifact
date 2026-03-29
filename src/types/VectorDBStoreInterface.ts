@@ -1,4 +1,5 @@
 import type { StoredDocument } from "./StoredDocument.js"
+import type { IngestedSourceDocument } from './IngestedSourceDocument.js'
 
 export interface VectorDBStoreInterface {
   // TODO: define the methods that any vector DB store must implement
@@ -12,7 +13,11 @@ export interface VectorDBStoreInterface {
 
   getAllDocuments(): Promise<StoredDocument[]>
 
-  findDocumentBySource(source: string): Promise<StoredDocument | null>
+  findDocumentBySource(source: string): Promise<IngestedSourceDocument | null>
+  
+  getDocumentsBySource(source: string): Promise<StoredDocument[]>
+
+  upsertSourceDocument(document: IngestedSourceDocument): Promise<void>
 
   deleteDocumentsBySource(source: string): Promise<void>
 }
