@@ -14,13 +14,14 @@ import { connectDB } from './config/db.js'
 // Dependency injection and instantiation of components, to follow the principle of separation of concerns and inversion of control, allowing for better modularity and testability
 const vectorDBStore = new VectorDBStore()
 const ingestion = new DocumentIngestion(vectorDBStore)
+// const retrieval = new DocumentRetrieval(vectorDBStore)
 // const retrieval = new DocumentRetrieval(vectorDBStore);
 // const llm = new LLM()
 // const orchestrator = new RAGOrchestrator(ingestion, llm /*, retrieval */)
 const orchestrator = new RAGOrchestrator(ingestion)
 
 // Connect to the database before running the ingestion pipeline
-// await connectDB()
+await connectDB()
 
 // Preprocessing step: ingestion of documents, parsing and storing in the vector DB
 await orchestrator.runIngestionPipeline()
