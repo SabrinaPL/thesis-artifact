@@ -24,9 +24,14 @@ export async function parsePDF(url: string): Promise<ParsedDocument> {
   try {
     const metadata = await parser.getInfo()
     const textResult = await parser.getText()
+    const title =
+      typeof metadata?.info?.Title === 'string' && metadata.info.Title.trim()
+        ? metadata.info.Title.trim()
+        : 'Untitled document'
 
     const parsedDocument = {
       text: textResult.text,
+      title,
       metadata: metadata as unknown as Record<string, unknown>,
     }
 
@@ -100,6 +105,7 @@ async function parseHTMLStatic(url: string): Promise<ParsedDocument | null> {
 
   return {
     text,
+    title,
     metadata: { title, source: url },
   }
 }
@@ -121,6 +127,7 @@ async function parseHTMLWithBrowser(url: string): Promise<ParsedDocument> {
 
     return {
       text,
+      title,
       metadata: { title, source: url },
     }
   } finally {

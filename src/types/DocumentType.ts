@@ -1,5 +1,6 @@
 export type ParsedDocument = {
   text: string
+  title: string
   metadata: Record<string, unknown>
 }
 
