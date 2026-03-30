@@ -21,7 +21,6 @@
 import type { VectorDBStoreInterface } from '../types/VectorDBStoreInterface.js'
 import type { GeneratedIaC } from '../types/GeneratedIaC.js'
 import type { StoredDocument } from '../types/StoredDocument.js'
-import { createEmbedding } from '../utils/embedder.js'
 import {
   extractQueryTerms,
   keywordOverlapScore,
@@ -74,15 +73,15 @@ export class DocumentRetrieval {
     limit: number,
     maxPerSource: number,
   ): Promise<StoredDocument[]> {
-    const queryEmbedding = await createEmbedding(retrievalInput)
+    const queryEmbedding = await this.#embedder(retrievalInput)
     const documents = await this.#vectorDBStore.getAllDocuments()
     const queryTerms = extractQueryTerms(retrievalInput)
 
     const rankedDocuments = documents
       .map((doc) => {
         const semanticScore = cosineSimilarity(queryEmbedding, doc.embedding)
-        const keywordScore = keywordOverlapScore(queryTerms, doc.keywords)
-        const categoryScore = categoryMatchScore(retrievalInput, doc.category)
+        const keywordScore = keywordOverlapScore(queryTerms, doc.keywords ?? [])
+        const categoryScore = categoryMatchScore(retrievalInput, doc.category ?? '')
 
         const finalScore =
           semanticScore * 0.7 +
@@ -112,11 +111,11 @@ export class DocumentRetrieval {
         source: doc.source,
         documentHash: doc.documentHash,
         chunkIndex: doc.chunkIndex,
-        title: doc.title,
-        category: doc.category,
-        description: doc.description,
-        keywords: doc.keywords,
-        metadata: doc.metadata,
+        title: doc.title ?? '',
+        category: doc.category ?? '',
+        description: doc.description ?? '',
+        keywords: doc.keywords ?? [],
+        metadata: doc.metadata as Record<string, unknown>,
       })
 
       sourceCounts.set(doc.source, count + 1)

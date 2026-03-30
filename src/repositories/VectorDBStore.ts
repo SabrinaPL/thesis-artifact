@@ -4,7 +4,6 @@ import type { StoredDocument } from '../types/StoredDocument.js'
 import type { IngestedSourceDocument } from '../types/IngestedSourceDocument.js'
 import type { VectorDocumentModelType } from '../models/VectorDocumentModel.js'
 import type { IngestedSourceDocumentModelType } from '../models/IngestedSourceDocumentModel.js'
-import { cosineSimilarity } from '../utils/cosineSimilarityCalculator.js'
 
 export class VectorDBStore implements VectorDBStoreInterface {
   readonly #vectorDocumentModel: VectorDocumentModelType
@@ -133,31 +132,85 @@ export class VectorDBStore implements VectorDBStoreInterface {
     console.log(`Deleted old chunks for source: ${source}`)
   }
 
-  async searchSimilarDocuments(
-    embedding: number[],
-    limit = 5,
-  ): Promise<StoredDocument[]> {
-    const documents = await this.getAllDocuments()
+//   async searchSimilarDocuments(
+//     query: string,
+//     embedding: number[],
+//     limit = 5,
+//   ): Promise<StoredDocument[]> {
+//     const documents = await this.getAllDocuments()
+//     const queryTerms = extractQueryTerms(query)
 
-    const rankedDocuments = documents
-      .map((doc) => ({
-        ...doc,
-        score: cosineSimilarity(embedding, doc.embedding),
-      }))
-      .sort((a, b) => b.score - a.score)
-      .slice(0, limit)
+//     const rankedDocuments = documents
+//       .map((doc) => {
+//         const semanticScore = cosineSimilarity(embedding, doc.embedding)
+//         const keywordScore = keywordOverlapScore(queryTerms, doc.keywords ?? [])
+//         const categoryScore = categoryMatchScore(query, doc.category ?? '')
 
-    return rankedDocuments.map((doc) => ({
-      text: doc.text,
-      embedding: doc.embedding,
-      source: doc.source,
-      documentHash: doc.documentHash,
-      chunkIndex: doc.chunkIndex,
-      title: doc.title ?? '',
-      category: doc.category ?? '',
-      description: doc.description ?? '',
-      keywords: Array.isArray(doc.keywords) ? doc.keywords : [],
-      metadata: doc.metadata,
-    }))
-  }
+//         const finalScore =
+//           semanticScore * 0.7 +
+//           keywordScore * 0.2 +
+//           categoryScore * 0.1
+
+//         return {
+//           ...doc,
+//           score: finalScore,
+//         }
+//       })
+//       .sort((a, b) => b.score - a.score)
+
+//     const results: StoredDocument[] = []
+//     const sourceCounts = new Map<string, number>()
+//     const maxPerSource = 2
+
+//     for (const doc of rankedDocuments) {
+//       const count = sourceCounts.get(doc.source) ?? 0
+
+//       if (count >= maxPerSource) {
+//         continue
+//       }
+
+//       results.push({
+//         text: doc.text,
+//         embedding: doc.embedding,
+//         source: doc.source,
+//         documentHash: doc.documentHash,
+//         chunkIndex: doc.chunkIndex,
+//         title: doc.title ?? '',
+//         category: doc.category ?? '',
+//         description: doc.description ?? '',
+//         keywords: doc.keywords ?? [],
+//         metadata: doc.metadata,
+//       })
+
+//       sourceCounts.set(doc.source, count + 1)
+
+//       if (results.length >= limit) {
+//         break
+//       }
+//     }
+
+//     return results
+//   }
+// }
+
+//         ...doc,
+//         score: cosineSimilarity(embedding, doc.embedding),
+//       }))
+//       .sort((a, b) => b.score - a.score)
+//       .slice(0, limit)
+
+//     return rankedDocuments.map((doc) => ({
+//       text: doc.text,
+//       embedding: doc.embedding,
+//       source: doc.source,
+//       documentHash: doc.documentHash,
+//       chunkIndex: doc.chunkIndex,
+//       title: doc.title ?? '',
+//       category: doc.category ?? '',
+//       description: doc.description ?? '',
+//       keywords: Array.isArray(doc.keywords) ? doc.keywords : [],
+//       metadata: doc.metadata,
+//     }))
+//   }
+// }
 }

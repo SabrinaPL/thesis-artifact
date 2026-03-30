@@ -47,9 +47,11 @@ export class DocumentIngestion {
   async ingestDocument(document: DocumentEntry) {
     console.log(`\n--- Ingesting: ${document.url} ---`)
 
+    // Step 1: Retrieve the document content using the appropriate parser based on the URL
     const parser = await getParser(document.url)
     console.log(`Parser selected for: ${document.url}`)
 
+    // Step 2: Parse the document to extract text content and metadata
     const parsedDocument = await parser(document.url)
     console.log(
       `Parsed document title: "${parsedDocument.metadata.title ?? 'N/A'}"`,
@@ -61,16 +63,61 @@ export class DocumentIngestion {
     // Fallback if the parser fails to extract text content
     if (!parsedDocument.text || !parsedDocument.text.trim()) {
       console.warn(`Skipping document with empty text: ${document.url}`)
-
       return
     }
 
+    // Step 3: Preprocess the document text (e.g., chunking) and generate embeddings for each chunk
     const normalizedText = parsedDocument.text.trim()
     const documentHash = createDocumentHash(normalizedText)
     console.log(`Document hash: ${documentHash}`)
 
+    // Step 4:Check if the document has already been ingested by comparing the hash of the 
+    // current document with the hash of the existing document in the database (if any) 
+    // for the same source URL. If the hashes match, skip re-ingestion to save 
+    // resources. If they don't match, update the database with the new content.
+    const existingSourceDocument =
+      await this.#vectorDBStore.findDocumentBySource(document.url)
+
+    // Step 5: Additionally, check if there are existing chunks for the same source URL in the 
+    // database. If there are existing chunks but the document hash has changed, 
+    // it indicates that the document content has been updated and the old chunks should
+    // be deleted before ingesting the new chunks, to avoid duplicates. This ensures that we don't have
+    // the old chunks before ingesting the new ones to avoid duplicates and ensure 
+    // that the database reflects the most current version of the document.
+    const existingChunks =
+      await this.#vectorDBStore.getDocumentsBySource(document.url)
+
+    // If the document hash matches the existing document skip re-ingestion
+    if (existingSourceDocument?.documentHash === documentHash) {
+       console.log('--- HASH CHECK ---')
+      console.log('SOURCE:', document.url)
+      console.log('EXISTING SOURCE DOC:', existingSourceDocument)
+      console.log('EXISTING HASH:', existingSourceDocument.documentHash)
+      console.log('NEW HASH:', documentHash)
+      console.log(`Skipping ingestion, document unchanged: ${document.url}`)
+      return
+    }
+    // If the document hash has changed but there are existing chunks for the same source, 
+    // delete the old chunks before ingesting the new ones
+    if (
+      (existingSourceDocument && existingSourceDocument.documentHash !== documentHash) ||
+      (!existingSourceDocument && existingChunks.length > 0)
+    ) {
+      console.log(`Cleaning old chunks for source: ${document.url}`)
+      await this.#vectorDBStore.deleteDocumentsBySource(document.url)
+    }
+
+    // Step 6: Extract the title from the metadata if available, otherwise use an empty string as a fallback
+    const title =
+      typeof parsedDocument.metadata.title === 'string'
+        ? parsedDocument.metadata.title
+        : ''
+
+    // Step 7: Chunk the document text using sentence-level chunking strategy with sbd 
+    // for accurate splitting, and log the chunking results for debugging and analysis
     const chunks = chunkText(normalizedText)
     console.log(`Chunks created: ${chunks.length}`)
+
     chunks.forEach((chunk, i) =>
       console.log(`  Chunk ${i + 1}: ${chunk.length} characters`),
     )
@@ -79,23 +126,18 @@ export class DocumentIngestion {
 
     // ! return <-- Uncomment this return to skip DB operations, for testing only parsing and chunking (w.o. affecting DB with test data)
 
-    const title =
-      typeof parsedDocument.metadata.title === 'string'
-        ? parsedDocument.metadata.title
-        : ''
-
-    await this.#vectorDBStore.upsertSourceDocument({
-      source: document.url,
-      documentHash,
-      title: title as string,
-      category: document.category,
-      description: document.description,
-      metadata: { ...parsedDocument.metadata },
-    })
-
+    // Step 8: Upsert the source document metadata (including the document hash) 
+    // into the database to keep track of the latest version of the document for 
+    // each source URL. This allows us to efficiently check for updates in future 
+    // ingestions and avoid unnecessary reprocessing of unchanged documents.
     for (const [index, chunk] of chunks.entries()) {
+      // Step 9: Generate embedding for the chunk
       const embedding = await this.#embedder(chunk)
-
+      
+      // Step 10: Extract keywords for the chunk using the keyword extractor utility, 
+      // which considers the chunk content as well as the document-level metadata 
+      // (title, category, description) to generate relevant keywords that can enhance 
+      // retrieval performance.
       const keywords = extractKeywords(chunk, {
         title,
         category: document.category,
@@ -103,6 +145,27 @@ export class DocumentIngestion {
         maxKeywords: 10,
       })
 
+    //   // Step 11: Insert each chunk into the vector DB with its corresponding embedding and metadata
+    //   await this.#vectorDBStore.upsertSourceDocument({
+    //     source: document.url,
+    //     documentHash,
+    //     title: title as string,
+    //     category: document.category,
+    //     description: document.description,
+    //     metadata: { ...parsedDocument.metadata },
+    //   })
+
+    // for (const [index, chunk] of chunks.entries()) {
+    //   const embedding = await this.#embedder(chunk)
+
+    //   const keywords = extractKeywords(chunk, {
+    //     title,
+    //     category: document.category,
+    //     description: document.description,
+    //     maxKeywords: 10,
+    //   })
+
+      // Step 12: Use a unique chunk key to prevent duplicates in the database
       await this.#vectorDBStore.insertToDB(chunk, embedding, {
         ...parsedDocument.metadata,
         source: document.url,
@@ -114,6 +177,18 @@ export class DocumentIngestion {
         keywords,
       })
     }
+    // Step 11: Upsert the source document metadata (including the document hash) 
+    // into the database to keep track of the latest version of the document for 
+    // each source URL. This allows us to efficiently check for updates in future 
+    // ingestions and avoid unnecessary reprocessing of unchanged documents.
+    await this.#vectorDBStore.upsertSourceDocument({
+      source: document.url,
+      documentHash,
+      title: title as string,
+      category: document.category,
+      description: document.description,
+      metadata: { ...parsedDocument.metadata },
+    })
   }
 
   // await this.#vectorDBStore.insertToDB(parsedDocument.text, parsedDocument.metadata);
