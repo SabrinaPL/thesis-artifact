@@ -23,6 +23,13 @@ export class VectorDBStore implements VectorDBStoreInterface {
     const source = metadata.source as string
     const documentHash = metadata.documentHash as string
     const chunkIndex = metadata.chunkIndex as number
+    const title = (metadata.title as string) || ''
+    const category = (metadata.category as string) || ''
+    const description = (metadata.description as string) || ''
+    const keywords = Array.isArray(metadata.keywords)
+      ? (metadata.keywords as string[])
+      : []
+
 
     const createdDocument = await VectorDocumentModel.create({
       text,
@@ -30,6 +37,10 @@ export class VectorDBStore implements VectorDBStoreInterface {
       source,
       documentHash,
       chunkIndex,
+      title,
+      category,
+      description,
+      keywords,
       metadata,
     })
 
@@ -46,6 +57,10 @@ export class VectorDBStore implements VectorDBStoreInterface {
       source: doc.source,
       documentHash: doc.documentHash,
       chunkIndex: doc.chunkIndex,
+      title: doc.title,
+      category: doc.category,
+      description: doc.description,
+      keywords: doc.keywords,
       metadata: doc.metadata as Record<string, unknown>,
     }))
   }
@@ -80,6 +95,10 @@ export class VectorDBStore implements VectorDBStoreInterface {
       source: doc.source,
       documentHash: doc.documentHash,
       chunkIndex: doc.chunkIndex,
+      title: doc.title,
+      category: doc.category,
+      description: doc.description,
+      keywords: doc.keywords,
       metadata: doc.metadata as Record<string, unknown>,
     }))
   }

@@ -7,6 +7,7 @@ import { chunkText } from '../utils/textChunker.js'
 import { createEmbedding } from '../utils/embedder.js'
 import { closeBrowser } from '../utils/parser.js'
 import { createDocumentHash } from '../utils/hashDocument.js'
+import { extractKeywords } from '../utils/keywordExtractor.js'
 
 /**
  * DocumentIngestion class is responsible for handling the ingestion of documents into the system. It retrieves the document URLs, parses and preprocesses the documents, and communicates with the VectorDBStore to store the vector embeddings of the documents.
@@ -95,6 +96,13 @@ export class DocumentIngestion {
     for (const [index, chunk] of chunks.entries()) {
       const embedding = await createEmbedding(chunk)
 
+      const keywords = extractKeywords(chunk, {
+        title,
+        category: document.category,
+        description: document.description,
+        maxKeywords: 10,
+      })
+
       await this.#vectorDBStore.insertToDB(chunk, embedding, {
         ...parsedDocument.metadata,
         source: document.url,
@@ -103,6 +111,7 @@ export class DocumentIngestion {
         documentHash,
         chunkIndex: index,
         title,
+        keywords,
       })
     }
 
