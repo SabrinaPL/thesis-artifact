@@ -113,7 +113,13 @@ export class DocumentIngestion {
         ? parsedDocument.metadata.title
         : ''
 
-    // Step 7: Chunk the document text using sentence-level chunking strategy with sbd 
+    // Step 7: Implement a check to skip ingestion of low-quality or blocked documents 
+    // based on certain keywords or patterns in the title and text content. 
+    if (shouldSkipDocument(title, normalizedText)) {
+      console.warn(`Skipping low-quality or blocked document: ${document.url}`)
+      return
+    }
+    // Step 8: Chunk the document text using sentence-level chunking strategy with sbd 
     // for accurate splitting, and log the chunking results for debugging and analysis
     const chunks = chunkText(normalizedText)
     console.log(`Chunks created: ${chunks.length}`)
@@ -126,15 +132,15 @@ export class DocumentIngestion {
 
     // ! return <-- Uncomment this return to skip DB operations, for testing only parsing and chunking (w.o. affecting DB with test data)
 
-    // Step 8: Upsert the source document metadata (including the document hash) 
+    // Step 9: Upsert the source document metadata (including the document hash) 
     // into the database to keep track of the latest version of the document for 
     // each source URL. This allows us to efficiently check for updates in future 
     // ingestions and avoid unnecessary reprocessing of unchanged documents.
     for (const [index, chunk] of chunks.entries()) {
-      // Step 9: Generate embedding for the chunk
+      // Step 10: Generate embedding for the chunk
       const embedding = await this.#embedder(chunk)
       
-      // Step 10: Extract keywords for the chunk using the keyword extractor utility, 
+      // Step 11: Extract keywords for the chunk using the keyword extractor utility, 
       // which considers the chunk content as well as the document-level metadata 
       // (title, category, description) to generate relevant keywords that can enhance 
       // retrieval performance.
@@ -177,7 +183,7 @@ export class DocumentIngestion {
         keywords,
       })
     }
-    // Step 11: Upsert the source document metadata (including the document hash) 
+    // Step 13: Upsert the source document metadata (including the document hash) 
     // into the database to keep track of the latest version of the document for 
     // each source URL. This allows us to efficiently check for updates in future 
     // ingestions and avoid unnecessary reprocessing of unchanged documents.
@@ -189,6 +195,43 @@ export class DocumentIngestion {
       description: document.description,
       metadata: { ...parsedDocument.metadata },
     })
+
+  function shouldSkipDocument(title: string, text: string): boolean {
+    const normalizedTitle = title.toLowerCase()
+    const normalizedText = text.toLowerCase()
+
+    const blockedTitlePatterns = [
+      'temporarily unavailable',
+      'just a moment',
+      'access denied',
+      'attention required',
+      'captcha',
+    ]
+
+    const blockedTextPatterns = [
+      'temporarily unavailable',
+      'access denied',
+      'enable javascript and cookies',
+      'verify you are human',
+      'captcha',
+      'cloudflare',
+    ]
+
+    if (blockedTitlePatterns.some((pattern) => normalizedTitle.includes(pattern))) {
+      return true
+    }
+
+    if (blockedTextPatterns.some((pattern) => normalizedText.includes(pattern))) {
+      return true
+    }
+
+    if (text.trim().length < 800) {
+      return true
+    }
+
+    return false
+  }
+    
   }
 
   // await this.#vectorDBStore.insertToDB(parsedDocument.text, parsedDocument.metadata);
