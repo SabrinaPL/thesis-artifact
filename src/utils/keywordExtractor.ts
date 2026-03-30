@@ -7,7 +7,6 @@ const STOP_WORDS = new Set([
   'from',
   'that',
   'this',
-  'into',
   'using',
   'use',
   'used',

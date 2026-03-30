@@ -59,10 +59,12 @@ export class VectorDBStore implements VectorDBStoreInterface {
       source: doc.source,
       documentHash: doc.documentHash,
       chunkIndex: doc.chunkIndex,
-      title: doc.title,
-      category: doc.category,
-      description: doc.description,
-      keywords: doc.keywords,
+      // Fallback to empty string or empty array if the fields are missing, to ensure the returned object always has the expected structure
+      title: doc.title ?? '',
+      category: doc.category ?? '',
+      description: doc.description ?? '',
+      keywords: Array.isArray(doc.keywords) ? doc.keywords : [],
+
       metadata: doc.metadata as Record<string, unknown>,
     }))
   }
@@ -97,10 +99,10 @@ export class VectorDBStore implements VectorDBStoreInterface {
       source: doc.source,
       documentHash: doc.documentHash,
       chunkIndex: doc.chunkIndex,
-      title: doc.title,
-      category: doc.category,
-      description: doc.description,
-      keywords: doc.keywords,
+      title: doc.title ?? '',
+      category: doc.category ?? '',
+      description: doc.description ?? '',
+      keywords: Array.isArray(doc.keywords) ? doc.keywords : [],
       metadata: doc.metadata as Record<string, unknown>,
     }))
   }
@@ -152,6 +154,10 @@ export class VectorDBStore implements VectorDBStoreInterface {
       source: doc.source,
       documentHash: doc.documentHash,
       chunkIndex: doc.chunkIndex,
+      title: doc.title ?? '',
+      category: doc.category ?? '',
+      description: doc.description ?? '',
+      keywords: Array.isArray(doc.keywords) ? doc.keywords : [],
       metadata: doc.metadata,
     }))
   }
