@@ -51,8 +51,12 @@ export class DocumentIngestion {
     console.log(`Parser selected for: ${document.url}`)
 
     const parsedDocument = await parser(document.url)
-    console.log(`Parsed document title: "${parsedDocument.metadata.title ?? 'N/A'}"`)
-    console.log(`Parsed text length: ${parsedDocument.text?.length ?? 0} characters`)
+    console.log(
+      `Parsed document title: "${parsedDocument.metadata.title ?? 'N/A'}"`,
+    )
+    console.log(
+      `Parsed text length: ${parsedDocument.text?.length ?? 0} characters`,
+    )
 
     // Fallback if the parser fails to extract text content
     if (!parsedDocument.text || !parsedDocument.text.trim()) {
@@ -74,7 +78,7 @@ export class DocumentIngestion {
     console.log(`--- Done: ${document.url} ---`)
 
     // ! return <-- Uncomment this return to skip DB operations, for testing only parsing and chunking (w.o. affecting DB with test data)
- 
+
     const title =
       typeof parsedDocument.metadata.title === 'string'
         ? parsedDocument.metadata.title
@@ -91,14 +95,14 @@ export class DocumentIngestion {
 
     for (const [index, chunk] of chunks.entries()) {
       const embedding = await this.#embedder(chunk)
-      
+
       const keywords = extractKeywords(chunk, {
         title,
         category: document.category,
         description: document.description,
         maxKeywords: 10,
       })
-      
+
       await this.#vectorDBStore.insertToDB(chunk, embedding, {
         ...parsedDocument.metadata,
         source: document.url,
