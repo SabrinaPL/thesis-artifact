@@ -3,9 +3,9 @@ import { DocumentIngestion } from '../src/modules/DocumentIngestion.js'
 import { getParser } from '../src/utils/parserSelector.js'
 import { retrieveDocuments } from '../src/utils/urlRetriever.js'
 import { chunkText } from '../src/utils/textChunker.js'
-import { createEmbedding } from '../src/utils/embedder.js'
 import { closeBrowser } from '../src/utils/parser.js'
 import { createDocumentHash } from '../src/utils/hashDocument.js'
+import { extractKeywords } from '../src/utils/keywordExtractor.js'
 
 vi.mock('../src/utils/parserSelector.js', () => ({
   getParser: vi.fn(),
@@ -19,10 +19,6 @@ vi.mock('../src/utils/textChunker.js', () => ({
   chunkText: vi.fn(),
 }))
 
-vi.mock('../src/utils/embedder.js', () => ({
-  createEmbedding: vi.fn(),
-}))
-
 vi.mock('../src/utils/parser.js', () => ({
   closeBrowser: vi.fn(),
 }))
@@ -31,9 +27,14 @@ vi.mock('../src/utils/hashDocument.js', () => ({
   createDocumentHash: vi.fn(),
 }))
 
+vi.mock('../src/utils/keywordExtractor.js', () => ({
+  extractKeywords: vi.fn(),
+}))
+
 describe('DocumentIngestion', () => {
   const mockInsertToDB = vi.fn()
   const mockFindDocumentBySource = vi.fn()
+  const mockSearchSimilarDocuments = vi.fn()
   const mockDeleteDocumentsBySource = vi.fn()
   const mockUpsertSourceDocument = vi.fn()
 
@@ -43,11 +44,14 @@ describe('DocumentIngestion', () => {
   const mockVectorDBStore = {
     insertToDB: mockInsertToDB,
     findDocumentBySource: mockFindDocumentBySource,
+    searchSimilarDocuments: mockSearchSimilarDocuments,
     deleteDocumentsBySource: mockDeleteDocumentsBySource,
     upsertSourceDocument: mockUpsertSourceDocument,
     getAllDocuments: mockGetAllDocuments,
     getDocumentsBySource: mockGetDocumentsBySource,
   }
+
+  const mockEmbedder = vi.fn()
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -60,6 +64,8 @@ describe('DocumentIngestion', () => {
     mockDeleteDocumentsBySource.mockResolvedValue(undefined)
     mockUpsertSourceDocument.mockResolvedValue(undefined)
     mockInsertToDB.mockResolvedValue(undefined)
+    mockEmbedder.mockReset()
+    mockEmbedder.mockResolvedValue([0.1, 0.2, 0.3])
   })
 
   afterEach(() => {
@@ -82,7 +88,7 @@ describe('DocumentIngestion', () => {
 
     vi.mocked(retrieveDocuments).mockReturnValue(docs)
 
-    const ingestion = new DocumentIngestion(mockVectorDBStore)
+    const ingestion = new DocumentIngestion(mockVectorDBStore, mockEmbedder)
     const ingestDocumentSpy = vi
       .spyOn(ingestion, 'ingestDocument')
       .mockResolvedValue(undefined)
@@ -110,13 +116,13 @@ describe('DocumentIngestion', () => {
 
     vi.mocked(getParser).mockResolvedValue(mockParser)
 
-    const ingestion = new DocumentIngestion(mockVectorDBStore)
+    const ingestion = new DocumentIngestion(mockVectorDBStore, mockEmbedder)
 
     await ingestion.ingestDocument(document)
 
     expect(mockParser).toHaveBeenCalledWith(document.url)
     expect(chunkText).not.toHaveBeenCalled()
-    expect(createEmbedding).not.toHaveBeenCalled()
+    expect(mockEmbedder).not.toHaveBeenCalled()
     expect(mockFindDocumentBySource).not.toHaveBeenCalled()
     expect(mockUpsertSourceDocument).not.toHaveBeenCalled()
     expect(mockInsertToDB).not.toHaveBeenCalled()
@@ -143,19 +149,39 @@ describe('DocumentIngestion', () => {
       'This is chunk 2.',
     ])
 
-    vi.mocked(createEmbedding)
+    vi.mocked(extractKeywords)
+      .mockReturnValueOnce(['keyword1', 'keyword2'])
+      .mockReturnValueOnce(['keyword3', 'keyword4'])
+
+    vi.mocked(mockEmbedder)
       .mockResolvedValueOnce([0.1, 0.2, 0.3])
       .mockResolvedValueOnce([0.4, 0.5, 0.6])
 
-    const ingestion = new DocumentIngestion(mockVectorDBStore)
+    const ingestion = new DocumentIngestion(mockVectorDBStore, mockEmbedder)
 
     await ingestion.ingestDocument(document)
 
     expect(mockParser).toHaveBeenCalledWith(document.url)
+    expect(extractKeywords).toHaveBeenCalledTimes(2)
+
 
     expect(chunkText).toHaveBeenCalledWith(
       'This is a new document. It has multiple parts.',
     )
+
+    expect(extractKeywords).toHaveBeenNthCalledWith(1, 'This is chunk 1.', {
+      title: 'New doc',
+      category: document.category,
+      description: document.description,
+      maxKeywords: 10,
+    })
+
+    expect(extractKeywords).toHaveBeenNthCalledWith(2, 'This is chunk 2.', {
+      title: 'New doc',
+      category: document.category,
+      description: document.description,
+      maxKeywords: 10,
+    })
 
     expect(mockFindDocumentBySource).toHaveBeenCalledWith(document.url)
 
@@ -171,24 +197,25 @@ describe('DocumentIngestion', () => {
       },
     })
 
-    expect(createEmbedding).toHaveBeenCalledTimes(2)
-    expect(createEmbedding).toHaveBeenNthCalledWith(1, 'This is chunk 1.')
-    expect(createEmbedding).toHaveBeenNthCalledWith(2, 'This is chunk 2.')
+    expect(mockEmbedder).toHaveBeenCalledTimes(2)
+    expect(mockEmbedder).toHaveBeenNthCalledWith(1, 'This is chunk 1.')
+    expect(mockEmbedder).toHaveBeenNthCalledWith(2, 'This is chunk 2.')
 
     expect(mockInsertToDB).toHaveBeenCalledTimes(2)
 
     expect(mockInsertToDB).toHaveBeenNthCalledWith(
       1,
-      'This is chunk 1.',
-      [0.1, 0.2, 0.3],
-      {
-        title: 'New doc',
-        source: document.url,
-        category: document.category,
-        description: document.description,
-        documentHash: 'fake-hash-123',
-        chunkIndex: 0,
-      },
+    'This is chunk 1.',
+    [0.1, 0.2, 0.3],
+    {
+      title: 'New doc',
+      source: document.url,
+      category: document.category,
+      description: document.description,
+      documentHash: 'fake-hash-123',
+      chunkIndex: 0,
+      keywords: ['keyword1', 'keyword2'],
+    },
     )
 
     expect(mockInsertToDB).toHaveBeenNthCalledWith(
@@ -202,6 +229,7 @@ describe('DocumentIngestion', () => {
         description: document.description,
         documentHash: 'fake-hash-123',
         chunkIndex: 1,
+        keywords: ['keyword3', 'keyword4'],
       },
     )
   })
@@ -234,7 +262,7 @@ describe('DocumentIngestion', () => {
       },
     })
 
-    const ingestion = new DocumentIngestion(mockVectorDBStore)
+    const ingestion = new DocumentIngestion(mockVectorDBStore, mockEmbedder)
 
     await ingestion.ingestDocument(document)
 
@@ -245,7 +273,7 @@ describe('DocumentIngestion', () => {
     expect(mockFindDocumentBySource).toHaveBeenCalledWith(document.url)
 
     expect(chunkText).not.toHaveBeenCalled()
-    expect(createEmbedding).not.toHaveBeenCalled()
+    expect(mockEmbedder).not.toHaveBeenCalled()
     expect(mockDeleteDocumentsBySource).not.toHaveBeenCalled()
     expect(mockUpsertSourceDocument).not.toHaveBeenCalled()
     expect(mockInsertToDB).not.toHaveBeenCalled()
@@ -284,11 +312,11 @@ describe('DocumentIngestion', () => {
       'Updated chunk 2.',
     ])
 
-    vi.mocked(createEmbedding)
+    vi.mocked(mockEmbedder)
       .mockResolvedValueOnce([0.1, 0.2, 0.3])
       .mockResolvedValueOnce([0.4, 0.5, 0.6])
 
-    const ingestion = new DocumentIngestion(mockVectorDBStore)
+    const ingestion = new DocumentIngestion(mockVectorDBStore, mockEmbedder)
 
     await ingestion.ingestDocument(document)
 
@@ -308,7 +336,7 @@ describe('DocumentIngestion', () => {
     })
 
     expect(chunkText).toHaveBeenCalledWith('This document has changed.')
-    expect(createEmbedding).toHaveBeenCalledTimes(2)
+    expect(mockEmbedder).toHaveBeenCalledTimes(2)
     expect(mockInsertToDB).toHaveBeenCalledTimes(2)
   })
 })
