@@ -26,6 +26,12 @@ export class VectorDBStore implements VectorDBStoreInterface {
     const source = metadata.source as string
     const documentHash = metadata.documentHash as string
     const chunkIndex = metadata.chunkIndex as number
+    const title = (metadata.title as string) || ''
+    const category = (metadata.category as string) || ''
+    const description = (metadata.description as string) || ''
+    const keywords = Array.isArray(metadata.keywords)
+      ? (metadata.keywords as string[])
+      : []
 
     const createdDocument = await this.#vectorDocumentModel.create({
       text,
@@ -33,6 +39,10 @@ export class VectorDBStore implements VectorDBStoreInterface {
       source,
       documentHash,
       chunkIndex,
+      title,
+      category,
+      description,
+      keywords,
       metadata,
     })
 
@@ -48,6 +58,12 @@ export class VectorDBStore implements VectorDBStoreInterface {
       source: doc.source,
       documentHash: doc.documentHash,
       chunkIndex: doc.chunkIndex,
+      // Fallback to empty string or empty array if the fields are missing, to ensure the returned object always has the expected structure
+      title: doc.title ?? '',
+      category: doc.category ?? '',
+      description: doc.description ?? '',
+      keywords: Array.isArray(doc.keywords) ? doc.keywords : [],
+
       metadata: doc.metadata as Record<string, unknown>,
     }))
   }
@@ -82,6 +98,10 @@ export class VectorDBStore implements VectorDBStoreInterface {
       source: doc.source,
       documentHash: doc.documentHash,
       chunkIndex: doc.chunkIndex,
+      title: doc.title ?? '',
+      category: doc.category ?? '',
+      description: doc.description ?? '',
+      keywords: Array.isArray(doc.keywords) ? doc.keywords : [],
       metadata: doc.metadata as Record<string, unknown>,
     }))
   }
@@ -133,6 +153,10 @@ export class VectorDBStore implements VectorDBStoreInterface {
       source: doc.source,
       documentHash: doc.documentHash,
       chunkIndex: doc.chunkIndex,
+      title: doc.title ?? '',
+      category: doc.category ?? '',
+      description: doc.description ?? '',
+      keywords: Array.isArray(doc.keywords) ? doc.keywords : [],
       metadata: doc.metadata,
     }))
   }
