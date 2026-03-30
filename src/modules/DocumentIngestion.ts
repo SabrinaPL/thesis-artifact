@@ -4,7 +4,6 @@ import type { DocumentEntry } from '../types/DocumentType.js'
 import { getParser } from '../utils/parserSelector.js'
 import { retrieveDocuments } from '../utils/urlRetriever.js'
 import { chunkText } from '../utils/textChunker.js'
-import { createEmbedding } from '../utils/embedder.js'
 import { closeBrowser } from '../utils/parser.js'
 import { createDocumentHash } from '../utils/hashDocument.js'
 import { extractKeywords } from '../utils/keywordExtractor.js'
@@ -13,10 +12,16 @@ import { extractKeywords } from '../utils/keywordExtractor.js'
  * DocumentIngestion class is responsible for handling the ingestion of documents into the system. It retrieves the document URLs, parses and preprocesses the documents, and communicates with the VectorDBStore to store the vector embeddings of the documents.
  */
 export class DocumentIngestion {
+  // TODO: re-enable when testing full ingestion pipeline (DB + embeddings)
   #vectorDBStore: VectorDBStoreInterface
+  #embedder: (text: string) => Promise<number[]>
 
-  constructor(vectorDBStore: VectorDBStoreInterface) {
+  constructor(
+    vectorDBStore: VectorDBStoreInterface,
+    embedder: (text: string) => Promise<number[]>,
+  ) {
     this.#vectorDBStore = vectorDBStore
+    this.#embedder = embedder
   }
 
   async ingestDocuments() {
@@ -40,11 +45,14 @@ export class DocumentIngestion {
   }
 
   async ingestDocument(document: DocumentEntry) {
-    // TODO: call the parser and preprocesser here
-    // TODO: add check here to determine the type of document (e.g. PDF, text) and call the appropriate parsing function
-    // const parsedDocument = await parsePDF(rawDocument)
+    console.log(`\n--- Ingesting: ${document.url} ---`)
+
     const parser = await getParser(document.url)
+    console.log(`Parser selected for: ${document.url}`)
+
     const parsedDocument = await parser(document.url)
+    console.log(`Parsed document title: "${parsedDocument.metadata.title ?? 'N/A'}"`)
+    console.log(`Parsed text length: ${parsedDocument.text?.length ?? 0} characters`)
 
     // Fallback if the parser fails to extract text content
     if (!parsedDocument.text || !parsedDocument.text.trim()) {
@@ -55,25 +63,18 @@ export class DocumentIngestion {
 
     const normalizedText = parsedDocument.text.trim()
     const documentHash = createDocumentHash(normalizedText)
+    console.log(`Document hash: ${documentHash}`)
 
-    const existingSourceDocument =
-      await this.#vectorDBStore.findDocumentBySource(document.url)
+    const chunks = chunkText(normalizedText)
+    console.log(`Chunks created: ${chunks.length}`)
+    chunks.forEach((chunk, i) =>
+      console.log(`  Chunk ${i + 1}: ${chunk.length} characters`),
+    )
 
-    if (existingSourceDocument?.documentHash === documentHash) {
-      console.log('--- HASH CHECK ---')
-      console.log('SOURCE:', document.url)
-      console.log('EXISTING SOURCE DOC:', existingSourceDocument)
-      console.log('EXISTING HASH:', existingSourceDocument?.documentHash)
-      console.log('NEW HASH:', documentHash)
-      console.log(`Skipping ingestion, document unchanged: ${document.url}`)
-      return
-    }
+    console.log(`--- Done: ${document.url} ---`)
 
-    if (existingSourceDocument) {
-      console.log(`Document changed, replacing old chunks: ${document.url}`)
-      await this.#vectorDBStore.deleteDocumentsBySource(document.url)
-    }
-
+    // ! return <-- Uncomment this return to skip DB operations, for testing only parsing and chunking (w.o. affecting DB with test data)
+ 
     const title =
       typeof parsedDocument.metadata.title === 'string'
         ? parsedDocument.metadata.title
@@ -82,27 +83,22 @@ export class DocumentIngestion {
     await this.#vectorDBStore.upsertSourceDocument({
       source: document.url,
       documentHash,
-      title,
+      title: title as string,
       category: document.category,
       description: document.description,
-      metadata: {
-        ...parsedDocument.metadata,
-      },
+      metadata: { ...parsedDocument.metadata },
     })
 
-    const chunks = chunkText(normalizedText)
-    console.log(`Created ${chunks.length} chunks for document: ${document.url}`)
-
     for (const [index, chunk] of chunks.entries()) {
-      const embedding = await createEmbedding(chunk)
-
+      const embedding = await this.#embedder(chunk)
+      
       const keywords = extractKeywords(chunk, {
         title,
         category: document.category,
         description: document.description,
         maxKeywords: 10,
       })
-
+      
       await this.#vectorDBStore.insertToDB(chunk, embedding, {
         ...parsedDocument.metadata,
         source: document.url,
@@ -114,8 +110,6 @@ export class DocumentIngestion {
         keywords,
       })
     }
-
-    console.log(`Finished ingestion for: ${document.url}`)
   }
 
   // await this.#vectorDBStore.insertToDB(parsedDocument.text, parsedDocument.metadata);

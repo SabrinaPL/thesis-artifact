@@ -1,6 +1,8 @@
 import type { DocumentIngestionInterface } from '../types/DocumentIngestionInterface.js'
-// import type { DocumentRetrievalInterface } from '../types/DocumentRetrievalInterface.js'
-// import type { LLMInterface } from '../types/LLMInterface.js'
+import type { DocumentRetrievalInterface } from '../types/DocumentRetrievalInterface.js'
+import type { GeneratedIaC } from '../types/GeneratedIaC.js'
+import type { StoredDocument } from '../types/StoredDocument.js'
+import type { LLMInterface } from '../types/LLMInterface.js'
 // import { SELF_EVAL_QUERY, SELF_EVAL_PROMPT } from "../prompts/selfEvalPrompts.js";
 
 /**
@@ -17,17 +19,17 @@ export class RAGOrchestrator {
   // #generatedIaC: string | null;
   // #generatedIaCSelfEvaluated: string | null;
   #ingestionInstance: DocumentIngestionInterface
-  // #retrievalInstance: DocumentRetrievalInterface
-  // #LLMInstance: LLMInterface
+  #retrievalInstance: DocumentRetrievalInterface
+  #LLMInstance: LLMInterface
 
   constructor(
     ingestionInstance: DocumentIngestionInterface,
-    // retrievalInstance: DocumentRetrievalInterface,
-    // llmInstance: LLMInterface
+    retrievalInstance: DocumentRetrievalInterface,
+    llmInstance: LLMInterface
   ) {
     this.#ingestionInstance = ingestionInstance
-    // this.#retrievalInstance = retrievalInstance
-    // this.#LLMInstance = llmInstance
+    this.#retrievalInstance = retrievalInstance
+    this.#LLMInstance = llmInstance
   }
 
   async runIngestionPipeline() {
@@ -41,6 +43,23 @@ export class RAGOrchestrator {
   // async runRetrievalPipelineSelfEval() {
 
   // }
+
+  async runRetrievalPipeline(
+    query: string,
+    context = '',
+  ): Promise<StoredDocument[]> {
+    return this.#retrievalInstance.retrieveDocuments(query, context)
+  }
+
+  async runRetrievalPipelineSelfEval(
+    generatedIaC: GeneratedIaC,
+    originalQuery: string,
+  ): Promise<StoredDocument[]> {
+    return this.#retrievalInstance.retrieveDocumentsSelfEval(
+      generatedIaC,
+      originalQuery,
+    )
+  }
 
   async #ingestDocuments() {
     await this.#ingestionInstance.ingestDocuments()

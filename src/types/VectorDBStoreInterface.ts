@@ -20,4 +20,9 @@ export interface VectorDBStoreInterface {
   upsertSourceDocument(document: IngestedSourceDocument): Promise<void>
 
   deleteDocumentsBySource(source: string): Promise<void>
+
+  searchSimilarDocuments(
+    embedding: number[],
+    limit?: number,
+  ): Promise<StoredDocument[]>
 }
