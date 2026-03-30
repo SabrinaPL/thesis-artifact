@@ -33,7 +33,6 @@ export class VectorDBStore implements VectorDBStoreInterface {
       ? (metadata.keywords as string[])
       : []
 
-
     const createdDocument = await this.#vectorDocumentModel.create({
       text,
       embedding,
