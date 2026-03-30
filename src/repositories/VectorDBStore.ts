@@ -2,18 +2,21 @@
 import type { VectorDBStoreInterface } from '../types/VectorDBStoreInterface.js'
 import type { StoredDocument } from '../types/StoredDocument.js'
 import type { IngestedSourceDocument } from '../types/IngestedSourceDocument.js'
-import { VectorDocumentModel } from '../models/VectorDocumentModel.js'
-import { IngestedSourceDocumentModel } from '../models/IngestedSourceDocumentModel.js'
+import type { VectorDocumentModelType } from '../models/VectorDocumentModel.js'
+import type { IngestedSourceDocumentModelType } from '../models/IngestedSourceDocumentModel.js'
+import { cosineSimilarity } from '../utils/cosineSimilarityCalculator.js'
 
 export class VectorDBStore implements VectorDBStoreInterface {
-  // #documents: any[]
-  // Use the StoredDocument type since it represents the structure of the documents
-  // we are storing in the vector DB, including text, embedding, and metadata
-  // #documents: StoredDocument[]
+  readonly #vectorDocumentModel: VectorDocumentModelType
+  readonly #ingestedSourceDocumentModel: IngestedSourceDocumentModelType
 
-  // constructor() {
-  //   this.#documents = []
-  // }
+  constructor(
+    vectorDocumentModel: VectorDocumentModelType,
+    ingestedSourceDocumentModel: IngestedSourceDocumentModelType,
+  ) {
+    this.#vectorDocumentModel = vectorDocumentModel
+    this.#ingestedSourceDocumentModel = ingestedSourceDocumentModel
+  }
 
   async insertToDB(
     text: string,
@@ -24,7 +27,7 @@ export class VectorDBStore implements VectorDBStoreInterface {
     const documentHash = metadata.documentHash as string
     const chunkIndex = metadata.chunkIndex as number
 
-    const createdDocument = await VectorDocumentModel.create({
+    const createdDocument = await this.#vectorDocumentModel.create({
       text,
       embedding,
       source,
@@ -37,8 +40,7 @@ export class VectorDBStore implements VectorDBStoreInterface {
   }
 
   async getAllDocuments(): Promise<StoredDocument[]> {
-    // return this.#documents
-    const documents = await VectorDocumentModel.find().lean()
+    const documents = await this.#vectorDocumentModel.find().lean()
 
     return documents.map((doc) => ({
       text: doc.text,
@@ -53,7 +55,7 @@ export class VectorDBStore implements VectorDBStoreInterface {
   async findDocumentBySource(
     source: string,
   ): Promise<IngestedSourceDocument | null> {
-    const doc = await IngestedSourceDocumentModel.findOne({ source }).lean()
+    const doc = await this.#ingestedSourceDocumentModel.findOne({ source }).lean()
 
     if (!doc) {
       return null
@@ -72,7 +74,7 @@ export class VectorDBStore implements VectorDBStoreInterface {
   }
 
   async getDocumentsBySource(source: string): Promise<StoredDocument[]> {
-    const documents = await VectorDocumentModel.find({ source }).lean()
+    const documents = await this.#vectorDocumentModel.find({ source }).lean()
 
     return documents.map((doc) => ({
       text: doc.text,
@@ -85,7 +87,7 @@ export class VectorDBStore implements VectorDBStoreInterface {
   }
 
   async upsertSourceDocument(document: IngestedSourceDocument): Promise<void> {
-    await IngestedSourceDocumentModel.findOneAndUpdate(
+    await this.#ingestedSourceDocumentModel.findOneAndUpdate(
       { source: document.source },
       {
         source: document.source,
@@ -107,7 +109,31 @@ export class VectorDBStore implements VectorDBStoreInterface {
   }
 
   async deleteDocumentsBySource(source: string): Promise<void> {
-    await VectorDocumentModel.deleteMany({ source })
+    await this.#vectorDocumentModel.deleteMany({ source })
     console.log(`Deleted old chunks for source: ${source}`)
+  }
+
+  async searchSimilarDocuments(
+    embedding: number[],
+    limit = 5,
+  ): Promise<StoredDocument[]> {
+    const documents = await this.getAllDocuments()
+
+    const rankedDocuments = documents
+      .map((doc) => ({
+        ...doc,
+        score: cosineSimilarity(embedding, doc.embedding),
+      }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit)
+
+    return rankedDocuments.map((doc) => ({
+      text: doc.text,
+      embedding: doc.embedding,
+      source: doc.source,
+      documentHash: doc.documentHash,
+      chunkIndex: doc.chunkIndex,
+      metadata: doc.metadata,
+    }))
   }
 }
