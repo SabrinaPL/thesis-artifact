@@ -81,12 +81,13 @@ export class DocumentRetrieval {
       .map((doc) => {
         const semanticScore = cosineSimilarity(queryEmbedding, doc.embedding)
         const keywordScore = keywordOverlapScore(queryTerms, doc.keywords ?? [])
-        const categoryScore = categoryMatchScore(retrievalInput, doc.category ?? '')
+        const categoryScore = categoryMatchScore(
+          retrievalInput,
+          doc.category ?? '',
+        )
 
         const finalScore =
-          semanticScore * 0.7 +
-          keywordScore * 0.2 +
-          categoryScore * 0.1
+          semanticScore * 0.7 + keywordScore * 0.2 + categoryScore * 0.1
 
         return {
           ...doc,

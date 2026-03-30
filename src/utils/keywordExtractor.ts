@@ -97,10 +97,7 @@ export function extractKeywords(
     chunk,
   ].join(' ')
 
-  const tokens = allText
-    .split(/\s+/)
-    .map(normalizeWord)
-    .filter(isUsefulKeyword)
+  const tokens = allText.split(/\s+/).map(normalizeWord).filter(isUsefulKeyword)
 
   const frequency = new Map<string, number>()
 

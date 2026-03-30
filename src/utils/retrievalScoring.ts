@@ -1,5 +1,8 @@
 export function normalizeTerm(term: string): string {
-  return term.toLowerCase().replace(/[^a-z0-9_-]/gi, '').trim()
+  return term
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]/gi, '')
+    .trim()
 }
 
 export function extractQueryTerms(query: string): string[] {

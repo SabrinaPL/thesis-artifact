@@ -1,4 +1,3 @@
-// TODO: implement VectorDBStore class to handle interactions with the vector database, including storing, retrieving, and managing vector embeddings
 import type { VectorDBStoreInterface } from '../types/VectorDBStoreInterface.js'
 import type { StoredDocument } from '../types/StoredDocument.js'
 import type { IngestedSourceDocument } from '../types/IngestedSourceDocument.js'
@@ -70,7 +69,9 @@ export class VectorDBStore implements VectorDBStoreInterface {
   async findDocumentBySource(
     source: string,
   ): Promise<IngestedSourceDocument | null> {
-    const doc = await this.#ingestedSourceDocumentModel.findOne({ source }).lean()
+    const doc = await this.#ingestedSourceDocumentModel
+      .findOne({ source })
+      .lean()
 
     if (!doc) {
       return null
@@ -132,85 +133,85 @@ export class VectorDBStore implements VectorDBStoreInterface {
     console.log(`Deleted old chunks for source: ${source}`)
   }
 
-//   async searchSimilarDocuments(
-//     query: string,
-//     embedding: number[],
-//     limit = 5,
-//   ): Promise<StoredDocument[]> {
-//     const documents = await this.getAllDocuments()
-//     const queryTerms = extractQueryTerms(query)
+  //   async searchSimilarDocuments(
+  //     query: string,
+  //     embedding: number[],
+  //     limit = 5,
+  //   ): Promise<StoredDocument[]> {
+  //     const documents = await this.getAllDocuments()
+  //     const queryTerms = extractQueryTerms(query)
 
-//     const rankedDocuments = documents
-//       .map((doc) => {
-//         const semanticScore = cosineSimilarity(embedding, doc.embedding)
-//         const keywordScore = keywordOverlapScore(queryTerms, doc.keywords ?? [])
-//         const categoryScore = categoryMatchScore(query, doc.category ?? '')
+  //     const rankedDocuments = documents
+  //       .map((doc) => {
+  //         const semanticScore = cosineSimilarity(embedding, doc.embedding)
+  //         const keywordScore = keywordOverlapScore(queryTerms, doc.keywords ?? [])
+  //         const categoryScore = categoryMatchScore(query, doc.category ?? '')
 
-//         const finalScore =
-//           semanticScore * 0.7 +
-//           keywordScore * 0.2 +
-//           categoryScore * 0.1
+  //         const finalScore =
+  //           semanticScore * 0.7 +
+  //           keywordScore * 0.2 +
+  //           categoryScore * 0.1
 
-//         return {
-//           ...doc,
-//           score: finalScore,
-//         }
-//       })
-//       .sort((a, b) => b.score - a.score)
+  //         return {
+  //           ...doc,
+  //           score: finalScore,
+  //         }
+  //       })
+  //       .sort((a, b) => b.score - a.score)
 
-//     const results: StoredDocument[] = []
-//     const sourceCounts = new Map<string, number>()
-//     const maxPerSource = 2
+  //     const results: StoredDocument[] = []
+  //     const sourceCounts = new Map<string, number>()
+  //     const maxPerSource = 2
 
-//     for (const doc of rankedDocuments) {
-//       const count = sourceCounts.get(doc.source) ?? 0
+  //     for (const doc of rankedDocuments) {
+  //       const count = sourceCounts.get(doc.source) ?? 0
 
-//       if (count >= maxPerSource) {
-//         continue
-//       }
+  //       if (count >= maxPerSource) {
+  //         continue
+  //       }
 
-//       results.push({
-//         text: doc.text,
-//         embedding: doc.embedding,
-//         source: doc.source,
-//         documentHash: doc.documentHash,
-//         chunkIndex: doc.chunkIndex,
-//         title: doc.title ?? '',
-//         category: doc.category ?? '',
-//         description: doc.description ?? '',
-//         keywords: doc.keywords ?? [],
-//         metadata: doc.metadata,
-//       })
+  //       results.push({
+  //         text: doc.text,
+  //         embedding: doc.embedding,
+  //         source: doc.source,
+  //         documentHash: doc.documentHash,
+  //         chunkIndex: doc.chunkIndex,
+  //         title: doc.title ?? '',
+  //         category: doc.category ?? '',
+  //         description: doc.description ?? '',
+  //         keywords: doc.keywords ?? [],
+  //         metadata: doc.metadata,
+  //       })
 
-//       sourceCounts.set(doc.source, count + 1)
+  //       sourceCounts.set(doc.source, count + 1)
 
-//       if (results.length >= limit) {
-//         break
-//       }
-//     }
+  //       if (results.length >= limit) {
+  //         break
+  //       }
+  //     }
 
-//     return results
-//   }
-// }
+  //     return results
+  //   }
+  // }
 
-//         ...doc,
-//         score: cosineSimilarity(embedding, doc.embedding),
-//       }))
-//       .sort((a, b) => b.score - a.score)
-//       .slice(0, limit)
+  //         ...doc,
+  //         score: cosineSimilarity(embedding, doc.embedding),
+  //       }))
+  //       .sort((a, b) => b.score - a.score)
+  //       .slice(0, limit)
 
-//     return rankedDocuments.map((doc) => ({
-//       text: doc.text,
-//       embedding: doc.embedding,
-//       source: doc.source,
-//       documentHash: doc.documentHash,
-//       chunkIndex: doc.chunkIndex,
-//       title: doc.title ?? '',
-//       category: doc.category ?? '',
-//       description: doc.description ?? '',
-//       keywords: Array.isArray(doc.keywords) ? doc.keywords : [],
-//       metadata: doc.metadata,
-//     }))
-//   }
-// }
+  //     return rankedDocuments.map((doc) => ({
+  //       text: doc.text,
+  //       embedding: doc.embedding,
+  //       source: doc.source,
+  //       documentHash: doc.documentHash,
+  //       chunkIndex: doc.chunkIndex,
+  //       title: doc.title ?? '',
+  //       category: doc.category ?? '',
+  //       description: doc.description ?? '',
+  //       keywords: Array.isArray(doc.keywords) ? doc.keywords : [],
+  //       metadata: doc.metadata,
+  //     }))
+  //   }
+  // }
 }
