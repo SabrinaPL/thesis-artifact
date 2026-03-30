@@ -33,6 +33,24 @@ const VectorDocumentSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
+     title: {
+      type: String,
+      default: '',
+    },
+    category: {
+      type: String,
+      default: '',
+      index: true,
+    },
+    description: {
+      type: String,
+      default: '',
+    },
+    keywords: {
+      type: [String],
+      default: [],
+      index: true,
+    },
     metadata: {
       type: mongoose.Schema.Types.Mixed,
       required: true,

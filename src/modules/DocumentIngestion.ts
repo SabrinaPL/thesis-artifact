@@ -6,6 +6,7 @@ import { retrieveDocuments } from '../utils/urlRetriever.js'
 import { chunkText } from '../utils/textChunker.js'
 import { closeBrowser } from '../utils/parser.js'
 import { createDocumentHash } from '../utils/hashDocument.js'
+import { extractKeywords } from '../utils/keywordExtractor.js'
 
 /**
  * DocumentIngestion class is responsible for handling the ingestion of documents into the system. It retrieves the document URLs, parses and preprocesses the documents, and communicates with the VectorDBStore to store the vector embeddings of the documents.
@@ -50,8 +51,12 @@ export class DocumentIngestion {
     console.log(`Parser selected for: ${document.url}`)
 
     const parsedDocument = await parser(document.url)
-    console.log(`Parsed document title: "${parsedDocument.metadata.title ?? 'N/A'}"`)
-    console.log(`Parsed text length: ${parsedDocument.text?.length ?? 0} characters`)
+    console.log(
+      `Parsed document title: "${parsedDocument.metadata.title ?? 'N/A'}"`,
+    )
+    console.log(
+      `Parsed text length: ${parsedDocument.text?.length ?? 0} characters`,
+    )
 
     // Fallback if the parser fails to extract text content
     if (!parsedDocument.text || !parsedDocument.text.trim()) {
@@ -73,7 +78,7 @@ export class DocumentIngestion {
     console.log(`--- Done: ${document.url} ---`)
 
     // ! return <-- Uncomment this return to skip DB operations, for testing only parsing and chunking (w.o. affecting DB with test data)
- 
+
     const title =
       typeof parsedDocument.metadata.title === 'string'
         ? parsedDocument.metadata.title
@@ -90,6 +95,14 @@ export class DocumentIngestion {
 
     for (const [index, chunk] of chunks.entries()) {
       const embedding = await this.#embedder(chunk)
+
+      const keywords = extractKeywords(chunk, {
+        title,
+        category: document.category,
+        description: document.description,
+        maxKeywords: 10,
+      })
+
       await this.#vectorDBStore.insertToDB(chunk, embedding, {
         ...parsedDocument.metadata,
         source: document.url,
@@ -98,6 +111,7 @@ export class DocumentIngestion {
         documentHash,
         chunkIndex: index,
         title,
+        keywords,
       })
     }
   }
