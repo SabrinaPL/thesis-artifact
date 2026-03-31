@@ -48,9 +48,19 @@ const orchestrator = new RAGOrchestrator(
 await connectDB()
 
 // Preprocessing step: ingestion of documents, parsing and storing in the vector DB
-await orchestrator.runIngestionPipeline()
-const allDocs = await vectorDBStore.getAllDocuments()
-console.log('ALL DOCUMENTS:', allDocs.slice(0, 5)) // Log the first 5 documents to verify the ingestion process;
+// await orchestrator.runIngestionPipeline()
+// const allDocs = await vectorDBStore.getAllDocuments()
+// console.log('ALL DOCUMENTS:', allDocs.slice(0, 5)) // Log the first 5 documents to verify the ingestion process;
+
+
+// Run the RAG pipeline with the first prompt
+const generatedIaC = await orchestrator.runRAGPipeline(PROMPT_FIRST_EXPERIMENT)
+
+console.log('GENERATED IAC:\n', generatedIaC)
+
+const generatedIaCSelfEval = await orchestrator.runRAGPipelineSelfEval(PROMPT_FIRST_EXPERIMENT, generatedIaC)
+
+console.log('GENERATED IAC SELF-EVAL:\n', generatedIaCSelfEval)
 
 // const retrievedDocuments = await orchestrator.runRAGPipeline(
 //   PROMPT_FIRST_EXPERIMENT,
@@ -67,9 +77,6 @@ console.log('ALL DOCUMENTS:', allDocs.slice(0, 5)) // Log the first 5 documents 
 // console.log('CONTEXT:\n', context)
 // console.log('GENERATED IAC:\n', generatedIaC.content)
 // console.log('--- END OF GENERATION PIPELINE TEST ---\n')
-
-// Test the self-evaluation retrieval pipeline with the internal self-eval query / prompt
-const selfEvalRetrievedDocs = await orchestrator.runRAGPipelineSelfEval()
 
 // console.log('SELF-EVAL RETRIEVED DOCUMENTS:', selfEvalRetrievedDocs.slice(0, 3))
 

@@ -9,7 +9,7 @@ export class LLM {
 
   async generateIaC(context: string, query: string): Promise<string> {
     const fullPrompt = `
-      Retrieved context:
+      Retrieved context summary:
       ${context}
 
       IaC task:
@@ -30,7 +30,7 @@ export class LLM {
     selfEvalPrompt: string,
   ): Promise<string> {
     const fullPrompt = `
-      Retrieved context:
+      Retrieved context summary:
       ${context}
 
       IaC task:

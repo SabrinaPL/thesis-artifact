@@ -48,29 +48,29 @@ export class RAGOrchestrator {
   async runRAGPipeline(
     query: string,
     context = '',
-  ): Promise<StoredDocument[]> {
-    return this.#retrieveDocuments(query, context)
+  ): Promise<string> {
+    const retrievedDocuments = await this.#retrieveDocuments(query, context)
+    const summary = await this.#abstractiveSummarization(retrievedDocuments)
 
-    // TODO: add the summary step here, then pass summary instead of full context to generation step
-    // TODO: add generation step here
+    console.log('ABSTRACTIVE SUMMARY FOR RAG FLOW:\n', summary)
+
+    // Inject query + summary as context to the generation step, instead of full retrieved context, to see if it improves generation and self-evaluation results
+    return this.#generateIaC(summary, query)
   }
 
   async #retrieveDocuments(query: string, context = '') {
     return this.#retrievalInstance.retrieveDocuments(query, context)
   }
 
-  // Entry point, called from index.ts, to run retrieval for self-evaluation (step 4)
-  // Only the self-eval query drives retrieval; generatedIaC and originalQuery are used in step 5 (generation)
-  async runRAGPipelineSelfEval(): Promise<StoredDocument[]> {
+  // Entry point, called from index.ts, to run retrieval for self-evaluation
+  async runRAGPipelineSelfEval(query: string, generatedIaC: string): Promise<string> {
     const retrievedDocuments = await this.#retrieveDocumentsSelfEval()
     const summary = await this.#abstractiveSummarization(retrievedDocuments)
 
-    console.log('ABSTRACTIVE SUMMARY FOR SELF-EVAL:\n', summary)
+    console.log('ABSTRACTIVE SUMMARY FOR RAG SELF-EVAL FLOW:\n', summary)
 
-    // TODO: add the summary step here, then pass summary instead of full context to generation step
-    // TODO: add generation step here, using summary instead of full context, and using the SELF_EVAL_PROMPT to guide the generation of the self-evaluation response
-
-    // return
+    // Inject summary, query, generatedIaC, selfEvalPrompt as context to the generation step, instead of full retrieved context, to see if it improves generation and self-evaluation results
+    return this.#generateIaCSelfEval(summary, query, generatedIaC, SELF_EVAL_PROMPT)
   }
 
   async #retrieveDocumentsSelfEval(): Promise<StoredDocument[]> {
@@ -85,37 +85,11 @@ export class RAGOrchestrator {
     return this.#llmInstance.generateAbstractiveSummary(context, ABSTRACTIVE_SUMMARY_PROMPT)
   }
 
-  async #generateIaC() {
-
+  async #generateIaC(summary: string, query: string): Promise<string> {
+    return this.#llmInstance.generateIaC(summary, query)
   }
 
-  async #generateIaCSelfEval() {
-
+  async #generateIaCSelfEval(context: string, query: string, generatedIaC: string, selfEvalPrompt: string) {
+    return this.#llmInstance.generateIaCSelfEval(context, query, generatedIaC, selfEvalPrompt)
   }
- 
-  // async runGenerationPipeline(
-  //   query: string,
-  //   retrievedDocuments: StoredDocument[],
-  // ): Promise<{ generatedIaC: GeneratedIaC; context: string }> {
-  //   // TODO: add the abstractive summary step here, then pass summary instead of full context to generation step?
-  //   const context = buildContextFromDocuments(retrievedDocuments)
-  //   const content = await this.#llmInstance.generateIaC(context, query)
-  //   return { generatedIaC: { content }, context }
-  // }
-
-  // async runRetrievalPipeline(query: string, context: string) {
-  //   await this.#retrieveDocuments(query, context)
-  // }
-
-  // async #retrieveDocuments(query: string, context: string) {
-  //   await this.#retrievalInstance.retrieveDocuments(query, context)
-  // }
-
-  // #generateIaC(query: string, retrievedChunks: string) {
-  //     this.#LLMInstance.generate(context, query);
-  // }
-
-  // #retrieveSelfEvaluate(selfEvalQuery: string) {}
-
-  // #generateSelfEvaluate(selfEvalPrompt: string, generatedIaC: string, originalQuery: string) {}
 }
