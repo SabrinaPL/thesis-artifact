@@ -7,6 +7,11 @@ import { chunkText } from '../utils/textChunker.js'
 import { closeBrowser } from '../utils/parser.js'
 import { createDocumentHash } from '../utils/hashDocument.js'
 import { extractKeywords } from '../utils/keywordExtractor.js'
+import {
+  shouldSkipDocument,
+  normalizeUrl,
+  getSourceVariants,
+} from '../utils/documentIngestionHelpers.js'
 
 /**
  * DocumentIngestion class is responsible for handling the ingestion of documents into the system. It retrieves the document URLs, parses and preprocesses the documents, and communicates with the VectorDBStore to store the vector embeddings of the documents.
@@ -137,26 +142,6 @@ export class DocumentIngestion {
         maxKeywords: 10,
       })
 
-      //   // Step 11: Insert each chunk into the vector DB with its corresponding embedding and metadata
-      //   await this.#vectorDBStore.upsertSourceDocument({
-      //     source: document.url,
-      //     documentHash,
-      //     title: title as string,
-      //     category: document.category,
-      //     description: document.description,
-      //     metadata: { ...parsedDocument.metadata },
-      //   })
-
-      // for (const [index, chunk] of chunks.entries()) {
-      //   const embedding = await this.#embedder(chunk)
-
-      //   const keywords = extractKeywords(chunk, {
-      //     title,
-      //     category: document.category,
-      //     description: document.description,
-      //     maxKeywords: 10,
-      //   })
-
       await this.#vectorDBStore.insertToDB(chunk, embedding, {
         ...parsedDocument.metadata,
         source,
@@ -179,91 +164,6 @@ export class DocumentIngestion {
       metadata: { ...parsedDocument.metadata },
     })
   }
-}
-
-function shouldSkipDocument(title: string, text: string): boolean {
-  const normalizedTitle = title.toLowerCase()
-  const normalizedText = text.toLowerCase()
-
-  const blockedTitlePatterns = [
-    'temporarily unavailable',
-    'just a moment',
-    'access denied',
-    'attention required',
-    'captcha',
-  ]
-
-  const blockedTextPatterns = [
-    'temporarily unavailable',
-    'access denied',
-    'enable javascript and cookies',
-    'verify you are human',
-    'captcha',
-    'cloudflare',
-  ]
-
-  const matchedTitlePattern = blockedTitlePatterns.find((pattern) =>
-    normalizedTitle.includes(pattern),
-  )
-
-  if (matchedTitlePattern) {
-    console.warn(
-      `Skipping because blocked title matched: ${matchedTitlePattern}`,
-    )
-    return true
-  }
-
-  const matchedTextPattern = blockedTextPatterns.find((pattern) =>
-    normalizedText.includes(pattern),
-  )
-
-  if (matchedTextPattern) {
-    console.warn(`Skipping because blocked text matched: ${matchedTextPattern}`)
-    return true
-  }
-
-  const minLengthEnv = process.env.DOCUMENT_MIN_LENGTH
-  const minLength =
-    typeof minLengthEnv === 'string' && minLengthEnv.trim() !== ''
-      ? Number.parseInt(minLengthEnv, 10)
-      : 0
-
-  if (Number.isNaN(minLength) || minLength < 0) {
-    console.warn(
-      `Invalid DOCUMENT_MIN_LENGTH value "${minLengthEnv}", disabling minimum length check.`,
-    )
-  } else if (minLength > 0 && text.trim().length < minLength) {
-    console.warn(
-      `Skipping because text is too short: ${text.trim().length} (min: ${minLength})`,
-    )
-    return true
-  }
-
-  if (text.trim().length < 800) {
-    console.warn(`Skipping because text is too short: ${text.trim().length}`)
-    return true
-  }
-
-  return false
-}
-
-function normalizeUrl(url: string): string {
-  const normalized = new URL(url.trim())
-
-  if (normalized.pathname.length > 1 && normalized.pathname.endsWith('/')) {
-    normalized.pathname = normalized.pathname.slice(0, -1)
-  }
-
-  normalized.hostname = normalized.hostname.toLowerCase()
-
-  return normalized.toString()
-}
-
-function getSourceVariants(url: string): string[] {
-  const raw = url.trim()
-  const normalized = normalizeUrl(url)
-
-  return [...new Set([raw, normalized])]
 }
 
 // await this.#vectorDBStore.insertToDB(parsedDocument.text, parsedDocument.metadata);
