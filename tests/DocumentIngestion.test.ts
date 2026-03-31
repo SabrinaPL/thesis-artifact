@@ -164,7 +164,6 @@ describe('DocumentIngestion', () => {
     expect(mockParser).toHaveBeenCalledWith(document.url)
     expect(extractKeywords).toHaveBeenCalledTimes(2)
 
-
     expect(chunkText).toHaveBeenCalledWith(
       'This is a new document. It has multiple parts.',
     )
@@ -205,17 +204,17 @@ describe('DocumentIngestion', () => {
 
     expect(mockInsertToDB).toHaveBeenNthCalledWith(
       1,
-    'This is chunk 1.',
-    [0.1, 0.2, 0.3],
-    {
-      title: 'New doc',
-      source: document.url,
-      category: document.category,
-      description: document.description,
-      documentHash: 'fake-hash-123',
-      chunkIndex: 0,
-      keywords: ['keyword1', 'keyword2'],
-    },
+      'This is chunk 1.',
+      [0.1, 0.2, 0.3],
+      {
+        title: 'New doc',
+        source: document.url,
+        category: document.category,
+        description: document.description,
+        documentHash: 'fake-hash-123',
+        chunkIndex: 0,
+        keywords: ['keyword1', 'keyword2'],
+      },
     )
 
     expect(mockInsertToDB).toHaveBeenNthCalledWith(

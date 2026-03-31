@@ -26,7 +26,7 @@ export class RAGOrchestrator {
   constructor(
     ingestionInstance: DocumentIngestionInterface,
     retrievalInstance: DocumentRetrievalInterface,
-    llmInstance: LLMInterface
+    llmInstance: LLMInterface,
   ) {
     this.#ingestionInstance = ingestionInstance
     this.#retrievalInstance = retrievalInstance

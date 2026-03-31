@@ -1,7 +1,7 @@
 import { RAGOrchestrator } from './orchestrator/RAGOrchestrator.js'
 import { VectorDBStore } from './repositories/VectorDBStore.js'
 import { DocumentIngestion } from './modules/DocumentIngestion.js'
-import { DocumentRetrieval } from './modules/DocumentRetrieval.js';
+import { DocumentRetrieval } from './modules/DocumentRetrieval.js'
 import { buildContextFromDocuments } from './utils/buildContext.js'
 import { LLM } from './modules/LLM.js'
 import { openAIConfig } from './config/openAIConfig.js'
@@ -14,16 +14,19 @@ import {
   /* PROMPT_SECOND_EXPERIMENT,
   PROMPT_THIRD_EXPERIMENT,
   PROMPT_FOURTH_EXPERIMENT, */
-} from "./prompts/experimentationPrompts.js";
+} from './prompts/experimentationPrompts.js'
 
 // Dependency injection and instantiation of components, to follow the principle of separation of concerns and inversion of control, allowing for better modularity and testability
 
 const openAIModel = openAIConfig()
-const openAIembedder = openAIEmbedderConfig()
+const openAIEmbedder = openAIEmbedderConfig()
 
-const vectorDBStore = new VectorDBStore(VectorDocumentModel, IngestedSourceDocumentModel)
-const ingestion = new DocumentIngestion(vectorDBStore, openAIembedder)
-const retrieval = new DocumentRetrieval(vectorDBStore, openAIembedder)
+const vectorDBStore = new VectorDBStore(
+  VectorDocumentModel,
+  IngestedSourceDocumentModel,
+)
+const ingestion = new DocumentIngestion(vectorDBStore, openAIEmbedder)
+const retrieval = new DocumentRetrieval(vectorDBStore, openAIEmbedder)
 const llm = new LLM(openAIModel)
 const orchestrator = new RAGOrchestrator(ingestion, retrieval, llm)
 

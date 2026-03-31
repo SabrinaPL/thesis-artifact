@@ -33,7 +33,7 @@ const VectorDocumentSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
-     title: {
+    title: {
       type: String,
       default: '',
     },

@@ -21,8 +21,9 @@ export interface VectorDBStoreInterface {
 
   deleteDocumentsBySource(source: string): Promise<void>
 
-  searchSimilarDocuments(
-    embedding: number[],
-    limit?: number,
-  ): Promise<StoredDocument[]>
+  // searchSimilarDocuments(
+  //   query: string,
+  //   embedding: number[],
+  //   limit?: number,
+  // ): Promise<StoredDocument[]>
 }

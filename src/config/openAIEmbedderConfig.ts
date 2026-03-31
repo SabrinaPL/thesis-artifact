@@ -5,15 +5,10 @@ export function openAIEmbedderConfig(): (text: string) => Promise<number[]> {
   if (!process.env.OPENAI_API_KEY) {
     throw new Error('OPENAI_API_KEY is not defined in environment variables')
   }
-  if (!process.env.OPENAI_EMBEDDING_MODEL) {
-    throw new Error(
-      'OPENAI_EMBEDDING_MODEL is not defined in environment variables',
-    )
-  }
 
   const model = new OpenAIEmbeddings({
     apiKey: process.env.OPENAI_API_KEY,
-    model: process.env.OPENAI_EMBEDDING_MODEL,
+    model: process.env.OPENAI_EMBEDDING_MODEL || 'text-embedding-3-small',
   })
 
   return createEmbedder((text) => model.embedQuery(text))
