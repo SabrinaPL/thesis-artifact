@@ -12,7 +12,8 @@ import { IngestedSourceDocumentModel } from './models/IngestedSourceDocumentMode
 import {
   PROMPT_FIRST_EXPERIMENT,
   /* PROMPT_SECOND_EXPERIMENT,
-  PROMPT_THIRD_EXPERIMENT,
+  """_summary_
+  """  PROMPT_THIRD_EXPERIMENT,
   PROMPT_FOURTH_EXPERIMENT, */
 } from './prompts/experimentationPrompts.js'
 
@@ -46,6 +47,14 @@ console.log('RETRIEVED DOCUMENTS:', retrievedDocuments.slice(0, 3))
 
 const context = buildContextFromDocuments(retrievedDocuments)
 console.log('CONTEXT:\n', context)
+
+// Test the generation pipeline with the retrieved context
+console.log('\n--- TESTING GENERATION PIPELINE ---')
+const generatedIaC = await orchestrator.runGenerationPipeline(
+  PROMPT_FIRST_EXPERIMENT,
+)
+console.log('GENERATED IAC:\n', generatedIaC.content)
+console.log('--- END OF GENERATION PIPELINE TEST ---\n')
 
 // Run the experiments
 // orchestrator.runRetrievalPipeline(PROMPT_FIRST_EXPERIMENT);

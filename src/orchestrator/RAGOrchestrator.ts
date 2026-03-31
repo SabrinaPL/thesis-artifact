@@ -26,7 +26,7 @@ export class RAGOrchestrator {
   constructor(
     ingestionInstance: DocumentIngestionInterface,
     retrievalInstance: DocumentRetrievalInterface,
-    llmInstance: LLMInterface,
+    llmInstance: LLMInterface
   ) {
     this.#ingestionInstance = ingestionInstance
     this.#retrievalInstance = retrievalInstance
@@ -53,8 +53,7 @@ export class RAGOrchestrator {
   }
 
   async runGenerationPipeline(query: string): Promise<GeneratedIaC> {
-    const retrievedDocuments =
-      await this.#retrievalInstance.retrieveDocuments(query)
+    const retrievedDocuments = await this.#retrievalInstance.retrieveDocuments(query)
     const context = buildContextFromDocuments(retrievedDocuments)
 
     const generatedContent = await this.#LLMInstance.generate(context, query)
