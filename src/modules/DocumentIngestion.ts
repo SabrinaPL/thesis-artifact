@@ -86,7 +86,8 @@ export class DocumentIngestion {
     const existingSourceDocument =
       await this.#vectorDBStore.findDocumentBySource(source)
 
-    const existingChunks = await this.#vectorDBStore.getDocumentsBySource(source)
+    const existingChunks =
+      await this.#vectorDBStore.getDocumentsBySource(source)
 
     // Step 6: Skip if unchanged
     if (existingSourceDocument?.documentHash === documentHash) {
@@ -178,7 +179,7 @@ export class DocumentIngestion {
   }
 }
 
-    function shouldSkipDocument(title: string, text: string): boolean {
+function shouldSkipDocument(title: string, text: string): boolean {
   const normalizedTitle = title.toLowerCase()
   const normalizedText = text.toLowerCase()
 
@@ -204,7 +205,9 @@ export class DocumentIngestion {
   )
 
   if (matchedTitlePattern) {
-    console.warn(`Skipping because blocked title matched: ${matchedTitlePattern}`)
+    console.warn(
+      `Skipping because blocked title matched: ${matchedTitlePattern}`,
+    )
     return true
   }
 
@@ -237,32 +240,32 @@ function normalizeUrl(url: string): string {
   return normalized.toString()
 }
 
-  // await this.#vectorDBStore.insertToDB(parsedDocument.text, parsedDocument.metadata);
+// await this.#vectorDBStore.insertToDB(parsedDocument.text, parsedDocument.metadata);
 
-  // insert each chunk into the vector DB with its corresponding embedding and metadata
-  // (including source document and chunk index for traceability)
+// insert each chunk into the vector DB with its corresponding embedding and metadata
+// (including source document and chunk index for traceability)
 
-  // for (const [index, chunk] of chunks.entries()) {
-  //   const embedding = await createEmbedding(chunk)
+// for (const [index, chunk] of chunks.entries()) {
+//   const embedding = await createEmbedding(chunk)
 
-  // // Use a unique chunk key to prevent duplicates in the database
-  // // TODO: consider using a more robust method for generating unique chunk keys,
-  // // such as hashing the chunk content or using a UUID,
-  // // especially if the same document might be ingested multiple times.
-  // // Or consider replacing the existing chunks with same resource and reingest
-  // const chunkKey = `${rawDocument}::${index}`
+// // Use a unique chunk key to prevent duplicates in the database
+// // TODO: consider using a more robust method for generating unique chunk keys,
+// // such as hashing the chunk content or using a UUID,
+// // especially if the same document might be ingested multiple times.
+// // Or consider replacing the existing chunks with same resource and reingest
+// const chunkKey = `${rawDocument}::${index}`
 
-  //   await this.#vectorDBStore.insertToDB(
-  //     // chunkKey,
-  //     chunk,
-  //     embedding,
-  //     {
-  //       ...parsedDocument.metadata,
-  //       source: document.url,
-  //       category: document.category,
-  //       description: document.description,
-  // TODO: do we want to add more metadata fields here, like title and keywords?
-  //       chunkIndex: index,
-  //     }
-  //   )
-  // }
+//   await this.#vectorDBStore.insertToDB(
+//     // chunkKey,
+//     chunk,
+//     embedding,
+//     {
+//       ...parsedDocument.metadata,
+//       source: document.url,
+//       category: document.category,
+//       description: document.description,
+// TODO: do we want to add more metadata fields here, like title and keywords?
+//       chunkIndex: index,
+//     }
+//   )
+// }
