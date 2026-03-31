@@ -3,6 +3,7 @@ import type { DocumentRetrievalInterface } from '../types/DocumentRetrievalInter
 import type { GeneratedIaC } from '../types/GeneratedIaC.js'
 import type { StoredDocument } from '../types/StoredDocument.js'
 import type { LLMInterface } from '../types/LLMInterface.js'
+import { buildContextFromDocuments } from '../utils/buildContext.js'
 // import { SELF_EVAL_QUERY, SELF_EVAL_PROMPT } from "../prompts/selfEvalPrompts.js";
 
 /**
@@ -49,6 +50,17 @@ export class RAGOrchestrator {
     context = '',
   ): Promise<StoredDocument[]> {
     return this.#retrievalInstance.retrieveDocuments(query, context)
+  }
+
+  async runGenerationPipeline(query: string): Promise<GeneratedIaC> {
+    const retrievedDocuments = await this.#retrievalInstance.retrieveDocuments(query)
+    const context = buildContextFromDocuments(retrievedDocuments)
+
+    const generatedContent = await this.#LLMInstance.generate(context, query)
+
+    return {
+      content: generatedContent,
+    }
   }
 
   async runRetrievalPipelineSelfEval(
