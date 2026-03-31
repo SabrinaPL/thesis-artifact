@@ -2,10 +2,8 @@ import { RAGOrchestrator } from './orchestrator/RAGOrchestrator.js'
 import { VectorDBStore } from './repositories/VectorDBStore.js'
 import { DocumentIngestion } from './modules/DocumentIngestion.js'
 import { DocumentRetrieval } from './modules/DocumentRetrieval.js'
-import { buildContextFromDocuments } from './utils/buildContext.js'
 import { saveExperimentResults } from './utils/experimentWriter.js'
 import { LLM } from './modules/LLM.js'
-import { Generation } from './modules/Generation.js'
 import { openAIConfig } from './config/openAIConfig.js'
 import { openAIEmbedderConfig } from './config/openAIEmbedderConfig.js'
 import { connectDB } from './config/db.js'
@@ -40,11 +38,10 @@ const vectorDBStore = new VectorDBStore(
 const ingestion = new DocumentIngestion(vectorDBStore, openAIEmbedder)
 const retrieval = new DocumentRetrieval(vectorDBStore, openAIEmbedder)
 const llm = new LLM(openAIModel)
-const generation = new Generation(llm)
 const orchestrator = new RAGOrchestrator(
   ingestion,
   retrieval,
-  generation /*, llm*/,
+  llm,
 )
 
 // Connect to the database before running the ingestion pipeline
@@ -61,15 +58,13 @@ const retrievedDocuments = await orchestrator.runRetrievalPipeline(
 
 console.log('RETRIEVED DOCUMENTS:', retrievedDocuments.slice(0, 3))
 
-const context = buildContextFromDocuments(retrievedDocuments)
-console.log('CONTEXT:\n', context)
-
 // Test the generation pipeline with the retrieved context
 console.log('\n--- TESTING GENERATION PIPELINE ---')
-const generatedIaC = await orchestrator.runGenerationPipeline(
+const { generatedIaC, context } = await orchestrator.runGenerationPipeline(
   PROMPT_FIRST_EXPERIMENT,
   retrievedDocuments,
 )
+console.log('CONTEXT:\n', context)
 console.log('GENERATED IAC:\n', generatedIaC.content)
 console.log('--- END OF GENERATION PIPELINE TEST ---\n')
 

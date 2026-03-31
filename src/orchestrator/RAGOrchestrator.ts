@@ -1,10 +1,11 @@
 import type { DocumentIngestionInterface } from '../types/DocumentIngestionInterface.js'
 import type { DocumentRetrievalInterface } from '../types/DocumentRetrievalInterface.js'
-import type { GenerationInterface } from '../types/GenerationInterface.js'
+import type { LLMInterface } from '../types/LLMInterface.js'
 import type { GeneratedIaC } from '../types/GeneratedIaC.js'
 import type { StoredDocument } from '../types/StoredDocument.js'
-// import type { LLMInterface } from '../types/LLMInterface.js'
+import { buildContextFromDocuments } from '../utils/buildContext.js'
 // import { SELF_EVAL_QUERY, SELF_EVAL_PROMPT } from "../prompts/selfEvalPrompts.js";
+// import { ABSTRACTIVE_SUMMARY_PROMPT } from '../prompts/summaryPrompt.js';
 
 /**
  * RAGOrchestrator class is responsible for orchestrating the Retrieval-Augmented Generation (RAG) process.
@@ -21,32 +22,21 @@ export class RAGOrchestrator {
   // #generatedIaCSelfEvaluated: string | null;
   #ingestionInstance: DocumentIngestionInterface
   #retrievalInstance: DocumentRetrievalInterface
-  #generationInstance: GenerationInterface
-  // #LLMInstance: LLMInterface
+  #llmInstance: LLMInterface
 
   constructor(
     ingestionInstance: DocumentIngestionInterface,
     retrievalInstance: DocumentRetrievalInterface,
-    generationInstance: GenerationInterface,
-    // llmInstance: LLMInterface
+    llmInstance: LLMInterface,
   ) {
     this.#ingestionInstance = ingestionInstance
     this.#retrievalInstance = retrievalInstance
-    this.#generationInstance = generationInstance
-    // this.#LLMInstance = llmInstance
+    this.#llmInstance = llmInstance
   }
 
   async runIngestionPipeline() {
     await this.#ingestDocuments()
   }
-
-  // async runRetrievalPipeline(query: string) {
-
-  // }
-
-  // async runRetrievalPipelineSelfEval() {
-
-  // }
 
   async runRetrievalPipeline(
     query: string,
@@ -55,17 +45,14 @@ export class RAGOrchestrator {
     return this.#retrievalInstance.retrieveDocuments(query, context)
   }
 
-  // async runGenerationPipeline(query: string): Promise<GeneratedIaC> {
-  //   const retrievedDocuments =
-  //     await this.#retrievalInstance.retrieveDocuments(query)
-
-  //   return this.#generationInstance.generate(query, retrievedDocuments)
-  // }
   async runGenerationPipeline(
     query: string,
     retrievedDocuments: StoredDocument[],
-  ): Promise<GeneratedIaC> {
-    return this.#generationInstance.generate(query, retrievedDocuments)
+  ): Promise<{ generatedIaC: GeneratedIaC; context: string }> {
+    // TODO: add the abstractive summary step here, then pass summary instead of full context to generation step?
+    const context = buildContextFromDocuments(retrievedDocuments)
+    const content = await this.#llmInstance.generateIaC(context, query)
+    return { generatedIaC: { content }, context }
   }
 
   async runRetrievalPipelineSelfEval(

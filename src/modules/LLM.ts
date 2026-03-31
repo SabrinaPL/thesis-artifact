@@ -50,7 +50,11 @@ export class LLM {
       : JSON.stringify(response.content)
   }
 
-  async generateAbstractiveSummary(context: string, query: string, abstractiveSummaryPrompt: string): Promise<string> {
+  async generateAbstractiveSummary(
+    context: string,
+    query: string,
+    abstractiveSummaryPrompt: string,
+  ): Promise<string> {
     const fullPrompt = `
       Retrieved context:
       ${context}
