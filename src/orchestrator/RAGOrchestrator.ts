@@ -34,14 +34,38 @@ export class RAGOrchestrator {
     this.#llmInstance = llmInstance
   }
 
+  // Entry point, called from index.ts, to run ingestion flow
   async runIngestionPipeline() {
     await this.#ingestDocuments()
   }
 
-  async runRetrievalPipeline(
+  async #ingestDocuments() {
+    await this.#ingestionInstance.ingestDocuments()
+  }
+
+  // Entry point, called from index.ts, to run RAG flow
+  async runRAGPipeline(
     query: string,
     context = '',
   ): Promise<StoredDocument[]> {
+    return this.#retrieveDocuments(query, context)
+
+    // TODO: add the summary step here, then pass summary instead of full context to generation step
+    // TODO: add generation step here
+  }
+ 
+  // Entry point, called from index.ts, to run RAG flow with self-evaluation
+  async runRAGPipelineSelfEval(
+    generatedIaC: GeneratedIaC,
+    originalQuery: string,
+  ): Promise<StoredDocument[]> {
+    return this.#retrievalInstance.retrieveDocumentsSelfEval(
+      generatedIaC,
+      originalQuery,
+    )
+  }
+
+  async #retrieveDocuments(query: string, context = '') {
     return this.#retrievalInstance.retrieveDocuments(query, context)
   }
 
@@ -63,10 +87,6 @@ export class RAGOrchestrator {
       generatedIaC,
       originalQuery,
     )
-  }
-
-  async #ingestDocuments() {
-    await this.#ingestionInstance.ingestDocuments()
   }
 
   // async runRetrievalPipeline(query: string, context: string) {
