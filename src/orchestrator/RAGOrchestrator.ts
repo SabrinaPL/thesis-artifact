@@ -55,10 +55,16 @@ export class RAGOrchestrator {
     return this.#retrievalInstance.retrieveDocuments(query, context)
   }
 
-  async runGenerationPipeline(query: string): Promise<GeneratedIaC> {
-    const retrievedDocuments =
-      await this.#retrievalInstance.retrieveDocuments(query)
+  // async runGenerationPipeline(query: string): Promise<GeneratedIaC> {
+  //   const retrievedDocuments =
+  //     await this.#retrievalInstance.retrieveDocuments(query)
 
+  //   return this.#generationInstance.generate(query, retrievedDocuments)
+  // }
+  async runGenerationPipeline(
+    query: string,
+    retrievedDocuments: StoredDocument[],
+  ): Promise<GeneratedIaC> {
     return this.#generationInstance.generate(query, retrievedDocuments)
   }
 
