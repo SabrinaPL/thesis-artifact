@@ -86,12 +86,12 @@ function isUsefulKeyword(word: string): boolean {
     return false
   }
 
-  // filtrera bort konstiga ihopklistrade ord
+  // filter out very long words that are unlikely to be useful keywords (e.g. long URLs, hashes, or random strings)
   if (word.length > 25) {
     return false
   }
 
-  // filtrera bort ord som bara är siffror
+  // filter out words that are purely numeric, as they are unlikely to be useful keywords in this context
   if (/^\d+$/.test(word)) {
     return false
   }

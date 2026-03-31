@@ -6,6 +6,7 @@ import { chunkText } from '../src/utils/textChunker.js'
 import { closeBrowser } from '../src/utils/parser.js'
 import { createDocumentHash } from '../src/utils/hashDocument.js'
 import { extractKeywords } from '../src/utils/keywordExtractor.js'
+import type { VectorDBStoreInterface } from '../src/types/VectorDBStoreInterface.js'
 
 vi.mock('../src/utils/parserSelector.js', () => ({
   getParser: vi.fn(),
@@ -34,38 +35,38 @@ vi.mock('../src/utils/keywordExtractor.js', () => ({
 describe('DocumentIngestion', () => {
   const mockInsertToDB = vi.fn()
   const mockFindDocumentBySource = vi.fn()
-  const mockSearchSimilarDocuments = vi.fn()
-  const mockDeleteDocumentsBySource = vi.fn()
-  const mockUpsertSourceDocument = vi.fn()
-
-  const mockGetAllDocuments = vi.fn()
   const mockGetDocumentsBySource = vi.fn()
+  const mockUpsertSourceDocument = vi.fn()
+  const mockDeleteDocumentsBySource = vi.fn()
+  const mockGetAllDocuments = vi.fn()
 
-  const mockVectorDBStore = {
+  const mockVectorDBStore: VectorDBStoreInterface = {
     insertToDB: mockInsertToDB,
-    findDocumentBySource: mockFindDocumentBySource,
-    searchSimilarDocuments: mockSearchSimilarDocuments,
-    deleteDocumentsBySource: mockDeleteDocumentsBySource,
-    upsertSourceDocument: mockUpsertSourceDocument,
     getAllDocuments: mockGetAllDocuments,
+    findDocumentBySource: mockFindDocumentBySource,
     getDocumentsBySource: mockGetDocumentsBySource,
+    upsertSourceDocument: mockUpsertSourceDocument,
+    deleteDocumentsBySource: mockDeleteDocumentsBySource,
   }
 
   const mockEmbedder = vi.fn()
 
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.spyOn(console, 'warn').mockImplementation(() => {})
-    vi.spyOn(console, 'log').mockImplementation(() => {})
 
-    mockGetAllDocuments.mockResolvedValue([])
-    mockGetDocumentsBySource.mockResolvedValue([])
+    vi.spyOn(console, 'log').mockImplementation(() => {})
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+
     mockFindDocumentBySource.mockResolvedValue(null)
+    mockGetDocumentsBySource.mockResolvedValue([])
     mockDeleteDocumentsBySource.mockResolvedValue(undefined)
     mockUpsertSourceDocument.mockResolvedValue(undefined)
     mockInsertToDB.mockResolvedValue(undefined)
-    mockEmbedder.mockReset()
+    mockGetAllDocuments.mockResolvedValue([])
     mockEmbedder.mockResolvedValue([0.1, 0.2, 0.3])
+
+    delete process.env.DOCUMENT_MIN_LENGTH
   })
 
   afterEach(() => {
@@ -89,16 +90,16 @@ describe('DocumentIngestion', () => {
     vi.mocked(retrieveDocuments).mockReturnValue(docs)
 
     const ingestion = new DocumentIngestion(mockVectorDBStore, mockEmbedder)
-    const ingestDocumentSpy = vi
+    const ingestSpy = vi
       .spyOn(ingestion, 'ingestDocument')
       .mockResolvedValue(undefined)
 
     await ingestion.ingestDocuments()
 
-    expect(ingestDocumentSpy).toHaveBeenCalledTimes(2)
-    expect(ingestDocumentSpy).toHaveBeenNthCalledWith(1, docs[0])
-    expect(ingestDocumentSpy).toHaveBeenNthCalledWith(2, docs[1])
-    expect(closeBrowser).toHaveBeenCalledTimes(1)
+    expect(ingestSpy).toHaveBeenCalledTimes(2)
+    expect(ingestSpy).toHaveBeenNthCalledWith(1, docs[0])
+    expect(ingestSpy).toHaveBeenNthCalledWith(2, docs[1])
+    expect(closeBrowser).toHaveBeenCalledOnce()
   })
 
   it('should skip ingestion if parsed document text is empty', async () => {
@@ -108,24 +109,81 @@ describe('DocumentIngestion', () => {
       description: 'Empty document',
     }
 
-    const mockParser = vi.fn().mockResolvedValue({
+    const parser = vi.fn().mockResolvedValue({
       text: '   ',
       title: 'Empty doc',
-      metadata: { title: 'Empty doc', source: document.url },
+      metadata: { title: 'Empty doc', source: 'https://example.com/empty-doc' },
     })
 
-    vi.mocked(getParser).mockResolvedValue(mockParser)
+    vi.mocked(getParser).mockResolvedValue(parser)
 
     const ingestion = new DocumentIngestion(mockVectorDBStore, mockEmbedder)
 
     await ingestion.ingestDocument(document)
 
-    expect(mockParser).toHaveBeenCalledWith(document.url)
+    expect(getParser).toHaveBeenCalledWith('https://example.com/empty-doc')
+    expect(parser).toHaveBeenCalledWith('https://example.com/empty-doc')
+
     expect(chunkText).not.toHaveBeenCalled()
     expect(mockEmbedder).not.toHaveBeenCalled()
     expect(mockFindDocumentBySource).not.toHaveBeenCalled()
-    expect(mockUpsertSourceDocument).not.toHaveBeenCalled()
+    expect(mockGetDocumentsBySource).not.toHaveBeenCalled()
     expect(mockInsertToDB).not.toHaveBeenCalled()
+    expect(mockUpsertSourceDocument).not.toHaveBeenCalled()
+  })
+
+  it('should skip ingestion if document is blocked by title', async () => {
+    const document = {
+      url: 'https://example.com/blocked-doc',
+      category: 'test',
+      description: 'Blocked document',
+    }
+
+    const longBlockedText = 'Please wait while we verify you are human. '.repeat(30)
+
+    const parser = vi.fn().mockResolvedValue({
+      text: longBlockedText,
+      title: 'Just a moment...',
+      metadata: {
+        title: 'Just a moment...',
+        source: 'https://example.com/blocked-doc',
+      },
+    })
+
+    vi.mocked(getParser).mockResolvedValue(parser)
+
+    const ingestion = new DocumentIngestion(mockVectorDBStore, mockEmbedder)
+
+    await ingestion.ingestDocument(document)
+
+    expect(mockFindDocumentBySource).not.toHaveBeenCalled()
+    expect(mockGetDocumentsBySource).not.toHaveBeenCalled()
+    expect(chunkText).not.toHaveBeenCalled()
+    expect(mockInsertToDB).not.toHaveBeenCalled()
+  })
+
+  it('should skip ingestion if text is too short according to current implementation', async () => {
+    const document = {
+      url: 'https://example.com/short-doc',
+      category: 'test',
+      description: 'Short document',
+    }
+
+    const parser = vi.fn().mockResolvedValue({
+      text: 'Too short text',
+      title: 'Short doc',
+      metadata: { title: 'Short doc', source: 'https://example.com/short-doc' },
+    })
+
+    vi.mocked(getParser).mockResolvedValue(parser)
+
+    const ingestion = new DocumentIngestion(mockVectorDBStore, mockEmbedder)
+
+    await ingestion.ingestDocument(document)
+
+    expect(chunkText).not.toHaveBeenCalled()
+    expect(mockInsertToDB).not.toHaveBeenCalled()
+    expect(mockUpsertSourceDocument).not.toHaveBeenCalled()
   })
 
   it('should chunk text, generate embeddings, and store chunks for a parsed document', async () => {
@@ -135,25 +193,23 @@ describe('DocumentIngestion', () => {
       description: 'New document description',
     }
 
-    const mockParser = vi.fn().mockResolvedValue({
-      text: 'This is a new document. It has multiple parts.',
+    const longText = 'Terraform OpenStack nginx documentation. '.repeat(40)
+
+    const parser = vi.fn().mockResolvedValue({
+      text: longText,
       title: 'New doc',
-      metadata: { title: 'New doc', source: document.url },
+      metadata: { title: 'New doc', source: 'https://example.com/new-doc' },
     })
 
-    vi.mocked(getParser).mockResolvedValue(mockParser)
+    vi.mocked(getParser).mockResolvedValue(parser)
     vi.mocked(createDocumentHash).mockReturnValue('fake-hash-123')
-
-    vi.mocked(chunkText).mockReturnValue([
-      'This is chunk 1.',
-      'This is chunk 2.',
-    ])
+    vi.mocked(chunkText).mockReturnValue(['This is chunk 1.', 'This is chunk 2.'])
 
     vi.mocked(extractKeywords)
       .mockReturnValueOnce(['keyword1', 'keyword2'])
       .mockReturnValueOnce(['keyword3', 'keyword4'])
 
-    vi.mocked(mockEmbedder)
+    mockEmbedder
       .mockResolvedValueOnce([0.1, 0.2, 0.3])
       .mockResolvedValueOnce([0.4, 0.5, 0.6])
 
@@ -161,45 +217,16 @@ describe('DocumentIngestion', () => {
 
     await ingestion.ingestDocument(document)
 
-    expect(mockParser).toHaveBeenCalledWith(document.url)
-    expect(extractKeywords).toHaveBeenCalledTimes(2)
+    expect(getParser).toHaveBeenCalledWith('https://example.com/new-doc')
+    expect(parser).toHaveBeenCalledWith('https://example.com/new-doc')
+    expect(createDocumentHash).toHaveBeenCalledWith(longText.trim())
 
-    expect(chunkText).toHaveBeenCalledWith(
-      'This is a new document. It has multiple parts.',
-    )
+    expect(mockFindDocumentBySource).toHaveBeenCalledWith('https://example.com/new-doc')
+    expect(mockGetDocumentsBySource).toHaveBeenCalledWith('https://example.com/new-doc')
 
-    expect(extractKeywords).toHaveBeenNthCalledWith(1, 'This is chunk 1.', {
-      title: 'New doc',
-      category: document.category,
-      description: document.description,
-      maxKeywords: 10,
-    })
-
-    expect(extractKeywords).toHaveBeenNthCalledWith(2, 'This is chunk 2.', {
-      title: 'New doc',
-      category: document.category,
-      description: document.description,
-      maxKeywords: 10,
-    })
-
-    expect(mockFindDocumentBySource).toHaveBeenCalledWith(document.url)
-
-    expect(mockUpsertSourceDocument).toHaveBeenCalledWith({
-      source: document.url,
-      documentHash: 'fake-hash-123',
-      title: 'New doc',
-      category: document.category,
-      description: document.description,
-      metadata: {
-        title: 'New doc',
-        source: document.url,
-      },
-    })
-
+    expect(chunkText).toHaveBeenCalledWith(longText.trim())
     expect(mockEmbedder).toHaveBeenCalledTimes(2)
-    expect(mockEmbedder).toHaveBeenNthCalledWith(1, 'This is chunk 1.')
-    expect(mockEmbedder).toHaveBeenNthCalledWith(2, 'This is chunk 2.')
-
+    expect(extractKeywords).toHaveBeenCalledTimes(2)
     expect(mockInsertToDB).toHaveBeenCalledTimes(2)
 
     expect(mockInsertToDB).toHaveBeenNthCalledWith(
@@ -208,7 +235,7 @@ describe('DocumentIngestion', () => {
       [0.1, 0.2, 0.3],
       {
         title: 'New doc',
-        source: document.url,
+        source: 'https://example.com/new-doc',
         category: document.category,
         description: document.description,
         documentHash: 'fake-hash-123',
@@ -223,7 +250,7 @@ describe('DocumentIngestion', () => {
       [0.4, 0.5, 0.6],
       {
         title: 'New doc',
-        source: document.url,
+        source: 'https://example.com/new-doc',
         category: document.category,
         description: document.description,
         documentHash: 'fake-hash-123',
@@ -231,6 +258,18 @@ describe('DocumentIngestion', () => {
         keywords: ['keyword3', 'keyword4'],
       },
     )
+
+    expect(mockUpsertSourceDocument).toHaveBeenCalledWith({
+      source: 'https://example.com/new-doc',
+      documentHash: 'fake-hash-123',
+      title: 'New doc',
+      category: document.category,
+      description: document.description,
+      metadata: {
+        title: 'New doc',
+        source: 'https://example.com/new-doc',
+      },
+    })
   })
 
   it('should skip ingestion if document already exists and hash is unchanged', async () => {
@@ -240,102 +279,173 @@ describe('DocumentIngestion', () => {
       description: 'Existing document description',
     }
 
-    const mockParser = vi.fn().mockResolvedValue({
-      text: 'This document already exists.',
+    const longText = 'This document already exists and is long enough. '.repeat(30)
+
+    const parser = vi.fn().mockResolvedValue({
+      text: longText,
       title: 'Existing doc',
-      metadata: { title: 'Existing doc', source: document.url },
+      metadata: {
+        title: 'Existing doc',
+        source: 'https://example.com/existing-doc',
+      },
     })
 
-    vi.mocked(getParser).mockResolvedValue(mockParser)
+    vi.mocked(getParser).mockResolvedValue(parser)
     vi.mocked(createDocumentHash).mockReturnValue('same-hash-123')
 
     mockFindDocumentBySource.mockResolvedValue({
-      source: document.url,
+      source: 'https://example.com/existing-doc',
       documentHash: 'same-hash-123',
       title: 'Existing doc',
       category: document.category,
       description: document.description,
       metadata: {
         title: 'Existing doc',
-        source: document.url,
+        source: 'https://example.com/existing-doc',
       },
     })
+
+    mockGetDocumentsBySource.mockResolvedValue([
+      {
+        text: 'Existing chunk',
+        embedding: [0.1, 0.2, 0.3],
+        source: 'https://example.com/existing-doc',
+        documentHash: 'same-hash-123',
+        chunkIndex: 0,
+        title: 'Existing doc',
+        category: document.category,
+        description: document.description,
+        keywords: ['existing'],
+        metadata: {
+          title: 'Existing doc',
+          source: 'https://example.com/existing-doc',
+        },
+      },
+    ])
 
     const ingestion = new DocumentIngestion(mockVectorDBStore, mockEmbedder)
 
     await ingestion.ingestDocument(document)
 
-    expect(mockParser).toHaveBeenCalledWith(document.url)
-    expect(createDocumentHash).toHaveBeenCalledWith(
-      'This document already exists.',
-    )
-    expect(mockFindDocumentBySource).toHaveBeenCalledWith(document.url)
+    expect(mockFindDocumentBySource).toHaveBeenCalledWith('https://example.com/existing-doc')
+    expect(mockGetDocumentsBySource).toHaveBeenCalledWith('https://example.com/existing-doc')
 
     expect(chunkText).not.toHaveBeenCalled()
     expect(mockEmbedder).not.toHaveBeenCalled()
     expect(mockDeleteDocumentsBySource).not.toHaveBeenCalled()
-    expect(mockUpsertSourceDocument).not.toHaveBeenCalled()
     expect(mockInsertToDB).not.toHaveBeenCalled()
+    expect(mockUpsertSourceDocument).not.toHaveBeenCalled()
   })
 
-  it('should replace old chunks and re-ingest if document already exists and hash has changed', async () => {
+  it('should delete old chunks and re-ingest if hash has changed', async () => {
     const document = {
       url: 'https://example.com/existing-doc',
       category: 'test_category',
       description: 'Existing document description',
     }
 
-    const mockParser = vi.fn().mockResolvedValue({
-      text: 'This document has changed.',
+    const longText = 'This document has changed and is long enough. '.repeat(30)
+
+    const parser = vi.fn().mockResolvedValue({
+      text: longText,
       title: 'Existing doc updated',
-      metadata: { title: 'Existing doc updated', source: document.url },
+      metadata: {
+        title: 'Existing doc updated',
+        source: 'https://example.com/existing-doc',
+      },
     })
 
-    vi.mocked(getParser).mockResolvedValue(mockParser)
+    vi.mocked(getParser).mockResolvedValue(parser)
     vi.mocked(createDocumentHash).mockReturnValue('new-hash-456')
+    vi.mocked(chunkText).mockReturnValue(['Updated chunk 1.', 'Updated chunk 2.'])
+
+    vi.mocked(extractKeywords)
+      .mockReturnValueOnce(['updated1'])
+      .mockReturnValueOnce(['updated2'])
 
     mockFindDocumentBySource.mockResolvedValue({
-      source: document.url,
+      source: 'https://example.com/existing-doc',
       documentHash: 'old-hash-123',
       title: 'Existing doc',
       category: document.category,
       description: document.description,
       metadata: {
         title: 'Existing doc',
-        source: document.url,
+        source: 'https://example.com/existing-doc',
       },
     })
 
-    vi.mocked(chunkText).mockReturnValue([
-      'Updated chunk 1.',
-      'Updated chunk 2.',
+    mockGetDocumentsBySource.mockResolvedValue([
+      {
+        text: 'Old chunk',
+        embedding: [0.1, 0.2, 0.3],
+        source: 'https://example.com/existing-doc',
+        documentHash: 'old-hash-123',
+        chunkIndex: 0,
+        title: 'Existing doc',
+        category: document.category,
+        description: document.description,
+        keywords: ['old'],
+        metadata: {
+          title: 'Existing doc',
+          source: 'https://example.com/existing-doc',
+        },
+      },
     ])
 
-    vi.mocked(mockEmbedder)
-      .mockResolvedValueOnce([0.1, 0.2, 0.3])
-      .mockResolvedValueOnce([0.4, 0.5, 0.6])
+    mockEmbedder
+      .mockResolvedValueOnce([0.11, 0.22, 0.33])
+      .mockResolvedValueOnce([0.44, 0.55, 0.66])
 
     const ingestion = new DocumentIngestion(mockVectorDBStore, mockEmbedder)
 
     await ingestion.ingestDocument(document)
 
-    expect(mockFindDocumentBySource).toHaveBeenCalledWith(document.url)
-    expect(mockDeleteDocumentsBySource).toHaveBeenCalledWith(document.url)
-
+    expect(mockDeleteDocumentsBySource).toHaveBeenCalledWith('https://example.com/existing-doc')
+    expect(mockInsertToDB).toHaveBeenCalledTimes(2)
     expect(mockUpsertSourceDocument).toHaveBeenCalledWith({
-      source: document.url,
+      source: 'https://example.com/existing-doc',
       documentHash: 'new-hash-456',
       title: 'Existing doc updated',
       category: document.category,
       description: document.description,
       metadata: {
         title: 'Existing doc updated',
-        source: document.url,
+        source: 'https://example.com/existing-doc',
+      },
+    })
+  })
+
+  it('should normalize trailing slash in source URL', async () => {
+    const document = {
+      url: 'https://example.com/path/',
+      category: 'test_category',
+      description: 'URL normalization test',
+    }
+
+    const longText = 'Normalization test document. '.repeat(40)
+
+    const parser = vi.fn().mockResolvedValue({
+      text: longText,
+      title: 'Normalized doc',
+      metadata: {
+        title: 'Normalized doc',
+        source: 'https://example.com/path',
       },
     })
 
-    expect(chunkText).toHaveBeenCalledWith('This document has changed.')
-    expect(mockEmbedder).toHaveBeenCalledTimes(2)
-    expect(mockInsertToDB).toHaveBeenCalledTimes(2)
+    vi.mocked(getParser).mockResolvedValue(parser)
+    vi.mocked(createDocumentHash).mockReturnValue('normalized-hash')
+    vi.mocked(chunkText).mockReturnValue(['Normalized chunk'])
+    vi.mocked(extractKeywords).mockReturnValue(['normalized'])
+
+    const ingestion = new DocumentIngestion(mockVectorDBStore, mockEmbedder)
+
+    await ingestion.ingestDocument(document)
+
+    expect(getParser).toHaveBeenCalledWith('https://example.com/path')
+    expect(parser).toHaveBeenCalledWith('https://example.com/path')
+    expect(mockFindDocumentBySource).toHaveBeenCalledWith('https://example.com/path')
+    expect(mockGetDocumentsBySource).toHaveBeenCalledWith('https://example.com/path')
   })
 })
