@@ -7,7 +7,7 @@ export const SELF_EVAL_SECURITY_QUERY = `
 `
 
 export const SELF_EVAL_CLEAN_CODE_QUERY = `
-    What are the code quality guidelines, clean code principles, maintainability best practices, and recommended patterns for writing readable Infrastructure as Code using Terraform, Ansible, and OpenStack?
+    What are the code quality guidelines, clean code principles, maintainability best practices, and recommended patterns for writing readable, maintainable, testable and well-structured Infrastructure as Code using Terraform, Ansible, and OpenStack?
 `
 
 export const SELF_EVAL_PROMPT = `
