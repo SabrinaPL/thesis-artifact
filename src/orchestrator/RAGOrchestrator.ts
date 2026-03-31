@@ -1,9 +1,9 @@
 import type { DocumentIngestionInterface } from '../types/DocumentIngestionInterface.js'
 import type { DocumentRetrievalInterface } from '../types/DocumentRetrievalInterface.js'
+import type { GenerationInterface } from '../types/GenerationInterface.js'
 import type { GeneratedIaC } from '../types/GeneratedIaC.js'
 import type { StoredDocument } from '../types/StoredDocument.js'
-import type { LLMInterface } from '../types/LLMInterface.js'
-import { buildContextFromDocuments } from '../utils/buildContext.js'
+// import type { LLMInterface } from '../types/LLMInterface.js'
 // import { SELF_EVAL_QUERY, SELF_EVAL_PROMPT } from "../prompts/selfEvalPrompts.js";
 
 /**
@@ -21,16 +21,19 @@ export class RAGOrchestrator {
   // #generatedIaCSelfEvaluated: string | null;
   #ingestionInstance: DocumentIngestionInterface
   #retrievalInstance: DocumentRetrievalInterface
-  #LLMInstance: LLMInterface
+  #generationInstance: GenerationInterface
+  // #LLMInstance: LLMInterface
 
   constructor(
     ingestionInstance: DocumentIngestionInterface,
     retrievalInstance: DocumentRetrievalInterface,
-    llmInstance: LLMInterface
+    generationInstance: GenerationInterface,
+    // llmInstance: LLMInterface
   ) {
     this.#ingestionInstance = ingestionInstance
     this.#retrievalInstance = retrievalInstance
-    this.#LLMInstance = llmInstance
+    this.#generationInstance = generationInstance
+    // this.#LLMInstance = llmInstance
   }
 
   async runIngestionPipeline() {
@@ -53,14 +56,10 @@ export class RAGOrchestrator {
   }
 
   async runGenerationPipeline(query: string): Promise<GeneratedIaC> {
-    const retrievedDocuments = await this.#retrievalInstance.retrieveDocuments(query)
-    const context = buildContextFromDocuments(retrievedDocuments)
+    const retrievedDocuments =
+      await this.#retrievalInstance.retrieveDocuments(query)
 
-    const generatedContent = await this.#LLMInstance.generate(context, query)
-
-    return {
-      content: generatedContent,
-    }
+    return this.#generationInstance.generate(query, retrievedDocuments)
   }
 
   async runRetrievalPipelineSelfEval(
