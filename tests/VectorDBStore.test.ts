@@ -20,8 +20,10 @@ describe('VectorDBStore', () => {
     } as unknown as IngestedSourceDocumentModelType
   })
 
-    it('should insert chunk into db', async () => {
-    vi.mocked(vectorDocumentModel.create).mockResolvedValue({ _id: 'abc123' } as never)
+  it('should insert chunk into db', async () => {
+    vi.mocked(vectorDocumentModel.create).mockResolvedValue({
+      _id: 'abc123',
+    } as never)
 
     const store = new VectorDBStore(
       vectorDocumentModel,
@@ -205,7 +207,9 @@ describe('VectorDBStore', () => {
   })
 
   it('should delete documents by source', async () => {
-    vi.mocked(vectorDocumentModel.deleteMany).mockResolvedValue(undefined as never)
+    vi.mocked(vectorDocumentModel.deleteMany).mockResolvedValue(
+      undefined as never,
+    )
 
     const store = new VectorDBStore(
       vectorDocumentModel,

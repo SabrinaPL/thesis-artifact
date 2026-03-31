@@ -21,7 +21,7 @@ import {
 
 // Dependency injection and instantiation of components, to follow the principle of separation of concerns and inversion of control, allowing for better modularity and testability
 
-// For later experiments, use labels to differentiate between different prompts and configurations, 
+// For later experiments, use labels to differentiate between different prompts and configurations,
 // and save results accordingly for easier analysis.
 // const experiments = [
 //   { label: 'first-prompt', prompt: PROMPT_FIRST_EXPERIMENT },

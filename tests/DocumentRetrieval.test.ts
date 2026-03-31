@@ -88,7 +88,9 @@ describe('DocumentRetrieval', () => {
 
     await retrieval.retrieveDocuments('Terraform', 'Use OpenStack provider')
 
-    expect(mockEmbedder).toHaveBeenCalledWith('Terraform\nUse OpenStack provider')
+    expect(mockEmbedder).toHaveBeenCalledWith(
+      'Terraform\nUse OpenStack provider',
+    )
   })
 
   it('should retrieve documents for self evaluation using originalQuery + generatedIaC', async () => {
@@ -121,7 +123,9 @@ describe('DocumentRetrieval', () => {
       },
     ]
 
-    mockVectorDBStore.getAllDocuments = vi.fn().mockResolvedValue(docsWithThreeFromSameSource)
+    mockVectorDBStore.getAllDocuments = vi
+      .fn()
+      .mockResolvedValue(docsWithThreeFromSameSource)
 
     const retrieval = new DocumentRetrieval(mockVectorDBStore, mockEmbedder)
     const result = await retrieval.retrieveDocuments('Terraform')

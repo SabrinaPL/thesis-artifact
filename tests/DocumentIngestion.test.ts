@@ -139,7 +139,8 @@ describe('DocumentIngestion', () => {
       description: 'Blocked document',
     }
 
-    const longBlockedText = 'Please wait while we verify you are human. '.repeat(30)
+    const longBlockedText =
+      'Please wait while we verify you are human. '.repeat(30)
 
     const parser = vi.fn().mockResolvedValue({
       text: longBlockedText,
@@ -203,7 +204,10 @@ describe('DocumentIngestion', () => {
 
     vi.mocked(getParser).mockResolvedValue(parser)
     vi.mocked(createDocumentHash).mockReturnValue('fake-hash-123')
-    vi.mocked(chunkText).mockReturnValue(['This is chunk 1.', 'This is chunk 2.'])
+    vi.mocked(chunkText).mockReturnValue([
+      'This is chunk 1.',
+      'This is chunk 2.',
+    ])
 
     vi.mocked(extractKeywords)
       .mockReturnValueOnce(['keyword1', 'keyword2'])
@@ -221,8 +225,12 @@ describe('DocumentIngestion', () => {
     expect(parser).toHaveBeenCalledWith('https://example.com/new-doc')
     expect(createDocumentHash).toHaveBeenCalledWith(longText.trim())
 
-    expect(mockFindDocumentBySource).toHaveBeenCalledWith('https://example.com/new-doc')
-    expect(mockGetDocumentsBySource).toHaveBeenCalledWith('https://example.com/new-doc')
+    expect(mockFindDocumentBySource).toHaveBeenCalledWith(
+      'https://example.com/new-doc',
+    )
+    expect(mockGetDocumentsBySource).toHaveBeenCalledWith(
+      'https://example.com/new-doc',
+    )
 
     expect(chunkText).toHaveBeenCalledWith(longText.trim())
     expect(mockEmbedder).toHaveBeenCalledTimes(2)
@@ -279,7 +287,9 @@ describe('DocumentIngestion', () => {
       description: 'Existing document description',
     }
 
-    const longText = 'This document already exists and is long enough. '.repeat(30)
+    const longText = 'This document already exists and is long enough. '.repeat(
+      30,
+    )
 
     const parser = vi.fn().mockResolvedValue({
       text: longText,
@@ -327,8 +337,12 @@ describe('DocumentIngestion', () => {
 
     await ingestion.ingestDocument(document)
 
-    expect(mockFindDocumentBySource).toHaveBeenCalledWith('https://example.com/existing-doc')
-    expect(mockGetDocumentsBySource).toHaveBeenCalledWith('https://example.com/existing-doc')
+    expect(mockFindDocumentBySource).toHaveBeenCalledWith(
+      'https://example.com/existing-doc',
+    )
+    expect(mockGetDocumentsBySource).toHaveBeenCalledWith(
+      'https://example.com/existing-doc',
+    )
 
     expect(chunkText).not.toHaveBeenCalled()
     expect(mockEmbedder).not.toHaveBeenCalled()
@@ -357,7 +371,10 @@ describe('DocumentIngestion', () => {
 
     vi.mocked(getParser).mockResolvedValue(parser)
     vi.mocked(createDocumentHash).mockReturnValue('new-hash-456')
-    vi.mocked(chunkText).mockReturnValue(['Updated chunk 1.', 'Updated chunk 2.'])
+    vi.mocked(chunkText).mockReturnValue([
+      'Updated chunk 1.',
+      'Updated chunk 2.',
+    ])
 
     vi.mocked(extractKeywords)
       .mockReturnValueOnce(['updated1'])
@@ -401,7 +418,9 @@ describe('DocumentIngestion', () => {
 
     await ingestion.ingestDocument(document)
 
-    expect(mockDeleteDocumentsBySource).toHaveBeenCalledWith('https://example.com/existing-doc')
+    expect(mockDeleteDocumentsBySource).toHaveBeenCalledWith(
+      'https://example.com/existing-doc',
+    )
     expect(mockInsertToDB).toHaveBeenCalledTimes(2)
     expect(mockUpsertSourceDocument).toHaveBeenCalledWith({
       source: 'https://example.com/existing-doc',
@@ -445,7 +464,11 @@ describe('DocumentIngestion', () => {
 
     expect(getParser).toHaveBeenCalledWith('https://example.com/path')
     expect(parser).toHaveBeenCalledWith('https://example.com/path')
-    expect(mockFindDocumentBySource).toHaveBeenCalledWith('https://example.com/path')
-    expect(mockGetDocumentsBySource).toHaveBeenCalledWith('https://example.com/path')
+    expect(mockFindDocumentBySource).toHaveBeenCalledWith(
+      'https://example.com/path',
+    )
+    expect(mockGetDocumentsBySource).toHaveBeenCalledWith(
+      'https://example.com/path',
+    )
   })
 })

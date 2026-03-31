@@ -85,7 +85,6 @@ describe('RAGOrchestrator', () => {
       content: 'generated config',
     }
 
-    vi.mocked(mockRetrieval.retrieveDocuments).mockResolvedValue(mockDocuments)
     vi.mocked(mockGeneration.generate).mockResolvedValue(generatedIaC)
 
     const orchestrator = new RAGOrchestrator(
@@ -96,11 +95,9 @@ describe('RAGOrchestrator', () => {
 
     const result = await orchestrator.runGenerationPipeline(
       'Generate an OpenStack web server',
+      mockDocuments,
     )
 
-    expect(mockRetrieval.retrieveDocuments).toHaveBeenCalledWith(
-      'Generate an OpenStack web server',
-    )
     expect(mockGeneration.generate).toHaveBeenCalledWith(
       'Generate an OpenStack web server',
       mockDocuments,

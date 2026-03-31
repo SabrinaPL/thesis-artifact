@@ -3,10 +3,7 @@ import path from 'node:path'
 import type { StoredDocument } from '../types/StoredDocument.js'
 
 function getPromptFolderName(promptLabel: string): string {
-  return promptLabel
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, '-')
+  return promptLabel.trim().toLowerCase().replace(/\s+/g, '-')
 }
 
 async function getNextExperimentName(promptLabel: string): Promise<string> {
@@ -45,11 +42,7 @@ export async function saveExperimentResults(
   const promptFolderName = getPromptFolderName(promptLabel)
   const experimentName = await getNextExperimentName(promptLabel)
 
-  const folderPath = path.resolve(
-    'outputs',
-    promptFolderName,
-    experimentName,
-  )
+  const folderPath = path.resolve('outputs', promptFolderName, experimentName)
 
   await mkdir(folderPath, { recursive: true })
 
