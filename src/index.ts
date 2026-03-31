@@ -3,6 +3,7 @@ import { VectorDBStore } from './repositories/VectorDBStore.js'
 import { DocumentIngestion } from './modules/DocumentIngestion.js'
 import { DocumentRetrieval } from './modules/DocumentRetrieval.js'
 import { buildContextFromDocuments } from './utils/buildContext.js'
+import { saveExperimentResults } from './utils/experimentWriter.js'
 import { LLM } from './modules/LLM.js'
 import { Generation } from './modules/Generation.js'
 import { openAIConfig } from './config/openAIConfig.js'
@@ -19,6 +20,15 @@ import {
 } from './prompts/experimentationPrompts.js'
 
 // Dependency injection and instantiation of components, to follow the principle of separation of concerns and inversion of control, allowing for better modularity and testability
+
+// For later experiments, use labels to differentiate between different prompts and configurations, 
+// and save results accordingly for easier analysis.
+// const experiments = [
+//   { label: 'first-prompt', prompt: PROMPT_FIRST_EXPERIMENT },
+//   { label: 'second-prompt', prompt: PROMPT_SECOND_EXPERIMENT },
+//   { label: 'third-prompt', prompt: PROMPT_THIRD_EXPERIMENT },
+//   { label: 'fourth-prompt', prompt: PROMPT_FOURTH_EXPERIMENT },
+// ]
 
 const openAIModel = openAIConfig()
 const openAIEmbedder = openAIEmbedderConfig()
@@ -58,10 +68,20 @@ console.log('CONTEXT:\n', context)
 console.log('\n--- TESTING GENERATION PIPELINE ---')
 const generatedIaC = await orchestrator.runGenerationPipeline(
   PROMPT_FIRST_EXPERIMENT,
+  retrievedDocuments,
 )
 console.log('GENERATED IAC:\n', generatedIaC.content)
 console.log('--- END OF GENERATION PIPELINE TEST ---\n')
 
+await saveExperimentResults(
+  // experiment.label, // for later experiments with multiple prompts/configurations, to differentiate results in the saved file
+  // experiment.prompt,
+  'first-prompt',
+  PROMPT_FIRST_EXPERIMENT,
+  generatedIaC.content,
+  context,
+  retrievedDocuments,
+)
 // Run the experiments
 // orchestrator.runRetrievalPipeline(PROMPT_FIRST_EXPERIMENT);
 // orchestrator.runRetrievalPipeline(PROMPT_SECOND_EXPERIMENT);
