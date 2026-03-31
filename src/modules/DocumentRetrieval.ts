@@ -19,7 +19,6 @@
 //   ) {}
 // }
 import type { VectorDBStoreInterface } from '../types/VectorDBStoreInterface.js'
-import type { GeneratedIaC } from '../types/GeneratedIaC.js'
 import type { StoredDocument } from '../types/StoredDocument.js'
 import { extractQueryTerms } from '../utils/retrievalScoring.js'
 import { rankDocuments } from '../utils/documentRankingCalculator.js'
@@ -41,7 +40,7 @@ export class DocumentRetrieval {
     context = '',
   ): Promise<StoredDocument[]> {
     const retrievalInput = `${query}\n${context}`.trim()
-    return this.#rankDocuments(retrievalInput, 5, 2)
+    return this.#rankDocuments(retrievalInput, 8, 3)
     // const queryEmbedding = await this.#embedder(retrievalInput)
 
     // const relevantDocuments =
@@ -51,11 +50,21 @@ export class DocumentRetrieval {
   }
 
   async retrieveDocumentsSelfEval(
-    generatedIaC: GeneratedIaC,
-    originalQuery: string,
+    queries: Array<{ query: string; categoryFilter?: string }>,
   ): Promise<StoredDocument[]> {
-    const retrievalInput = `${originalQuery}\n${generatedIaC.content}`.trim()
-    return this.#rankDocuments(retrievalInput, 5, 2)
+    const results = await Promise.all(
+      queries.map(({ query, categoryFilter }) =>
+        this.#rankDocuments(query.trim(), 5, 2, categoryFilter),
+      ),
+    )
+    const seen = new Set<string>()
+    return results.flat().filter((doc) => {
+      const key = `${doc.documentHash}:${doc.chunkIndex}`
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+
     // const queryEmbedding = await this.#embedder(retrievalInput)
 
     // const relevantDocuments =
@@ -68,6 +77,7 @@ export class DocumentRetrieval {
     retrievalInput: string,
     limit: number,
     maxPerSource: number,
+    categoryFilter?: string,
   ): Promise<StoredDocument[]> {
     // Current prototype implementation ranks all stored documents in application code.
     // For larger datasets, retrieval should first use vector search in the DB to fetch
@@ -77,6 +87,6 @@ export class DocumentRetrieval {
       this.#vectorDBStore.getAllDocuments(),
     ])
     const queryTerms = extractQueryTerms(retrievalInput)
-    return rankDocuments(documents, queryEmbedding, queryTerms, retrievalInput, limit, maxPerSource)
+    return rankDocuments(documents, queryEmbedding, queryTerms, retrievalInput, limit, maxPerSource, categoryFilter)
   }
 }

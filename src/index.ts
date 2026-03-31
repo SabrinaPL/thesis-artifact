@@ -52,37 +52,43 @@ await orchestrator.runIngestionPipeline()
 const allDocs = await vectorDBStore.getAllDocuments()
 console.log('ALL DOCUMENTS:', allDocs.slice(0, 5)) // Log the first 5 documents to verify the ingestion process;
 
-const retrievedDocuments = await orchestrator.runRetrievalPipeline(
-  PROMPT_FIRST_EXPERIMENT,
-)
+// const retrievedDocuments = await orchestrator.runRAGPipeline(
+//   PROMPT_FIRST_EXPERIMENT,
+// )
 
-console.log('RETRIEVED DOCUMENTS:', retrievedDocuments.slice(0, 3))
+// console.log('RETRIEVED DOCUMENTS:', retrievedDocuments.slice(0, 3))
 
 // Test the generation pipeline with the retrieved context
-console.log('\n--- TESTING GENERATION PIPELINE ---')
-const { generatedIaC, context } = await orchestrator.runGenerationPipeline(
-  PROMPT_FIRST_EXPERIMENT,
-  retrievedDocuments,
-)
-console.log('CONTEXT:\n', context)
-console.log('GENERATED IAC:\n', generatedIaC.content)
-console.log('--- END OF GENERATION PIPELINE TEST ---\n')
+// console.log('\n--- TESTING GENERATION PIPELINE ---')
+// const { generatedIaC, context } = await orchestrator.runGenerationPipeline(
+//   PROMPT_FIRST_EXPERIMENT,
+//   retrievedDocuments,
+// )
+// console.log('CONTEXT:\n', context)
+// console.log('GENERATED IAC:\n', generatedIaC.content)
+// console.log('--- END OF GENERATION PIPELINE TEST ---\n')
 
-await saveExperimentResults(
-  // experiment.label, // for later experiments with multiple prompts/configurations, to differentiate results in the saved file
-  // experiment.prompt,
-  'first-prompt',
-  PROMPT_FIRST_EXPERIMENT,
-  generatedIaC.content,
-  context,
-  retrievedDocuments,
-)
+// Test the self-evaluation retrieval pipeline with the internal self-eval query / prompt
+const selfEvalRetrievedDocs = await orchestrator.runRAGPipelineSelfEval()
+
+// console.log('SELF-EVAL RETRIEVED DOCUMENTS:', selfEvalRetrievedDocs.slice(0, 3))
+
+// await saveExperimentResults(
+//   // experiment.label, // for later experiments with multiple prompts/configurations, to differentiate results in the saved file
+//   // experiment.prompt,
+//   'first-prompt',
+//   PROMPT_FIRST_EXPERIMENT,
+//   generatedIaC.content,
+//   context,
+//   retrievedDocuments,
+// )
+
 // Run the experiments
-// orchestrator.runRetrievalPipeline(PROMPT_FIRST_EXPERIMENT);
-// orchestrator.runRetrievalPipeline(PROMPT_SECOND_EXPERIMENT);
-// orchestrator.runRetrievalPipeline(PROMPT_THIRD_EXPERIMENT);
-// orchestrator.runRetrievalPipeline(PROMPT_FOURTH_EXPERIMENT);
-// orchestrator.runRetrievalPipelineSelfEval(PROMPT_FIRST_EXPERIMENT);
-// orchestrator.runRetrievalPipelineSelfEval(PROMPT_SECOND_EXPERIMENT);
-// orchestrator.runRetrievalPipelineSelfEval(PROMPT_THIRD_EXPERIMENT);
-// orchestrator.runRetrievalPipelineSelfEval(PROMPT_FOURTH_EXPERIMENT);
+// orchestrator.runRAGPipeline(PROMPT_FIRST_EXPERIMENT);
+// orchestrator.runRAGPipeline(PROMPT_SECOND_EXPERIMENT);
+// orchestrator.runRAGPipeline(PROMPT_THIRD_EXPERIMENT);
+// orchestrator.runRAGPipeline(PROMPT_FOURTH_EXPERIMENT);
+// orchestrator.runRAGPipelineSelfEval(PROMPT_FIRST_EXPERIMENT);
+// orchestrator.runRAGPipelineSelfEval(PROMPT_SECOND_EXPERIMENT);
+// orchestrator.runRAGPipelineSelfEval(PROMPT_THIRD_EXPERIMENT);
+// orchestrator.runRAGPipelineSelfEval(PROMPT_FOURTH_EXPERIMENT);

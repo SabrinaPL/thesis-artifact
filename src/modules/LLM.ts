@@ -52,18 +52,14 @@ export class LLM {
 
   async generateAbstractiveSummary(
     context: string,
-    query: string,
     abstractiveSummaryPrompt: string,
   ): Promise<string> {
     const fullPrompt = `
       Retrieved context:
       ${context}
 
-      IaC task:
-      ${query} // External prompt
-
       Summarization prompt including summarization guidelines:
-      ${abstractiveSummaryPrompt}  // Internal prompt
+      ${abstractiveSummaryPrompt}
     `
 
     const response = await this.#model.invoke(fullPrompt)

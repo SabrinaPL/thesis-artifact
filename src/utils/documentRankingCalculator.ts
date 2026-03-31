@@ -19,8 +19,12 @@ export function rankDocuments(
   retrievalInput: string,
   limit: number,
   maxPerSource: number,
+  categoryFilter?: string,
 ): StoredDocument[] {
-  const ranked = documents
+  const pool = categoryFilter
+    ? documents.filter((doc) => doc.category === categoryFilter)
+    : documents
+  const ranked = pool
     .map((doc) => {
       const semanticScore = cosineSimilarity(queryEmbedding, doc.embedding)
       const keywordScore = keywordOverlapScore(queryTerms, doc.keywords ?? [])

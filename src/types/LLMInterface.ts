@@ -8,7 +8,6 @@ export interface LLMInterface {
   ): Promise<string>
   generateAbstractiveSummary(
     context: string,
-    query: string,
     abstractiveSummaryPrompt: string,
   ): Promise<string>
 }
