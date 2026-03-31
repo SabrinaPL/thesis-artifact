@@ -31,7 +31,11 @@ const ingestion = new DocumentIngestion(vectorDBStore, openAIEmbedder)
 const retrieval = new DocumentRetrieval(vectorDBStore, openAIEmbedder)
 const llm = new LLM(openAIModel)
 const generation = new Generation(llm)
-const orchestrator = new RAGOrchestrator(ingestion, retrieval, generation /*, llm*/)
+const orchestrator = new RAGOrchestrator(
+  ingestion,
+  retrieval,
+  generation /*, llm*/,
+)
 
 // Connect to the database before running the ingestion pipeline
 await connectDB()
