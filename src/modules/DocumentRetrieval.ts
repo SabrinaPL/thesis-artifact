@@ -74,6 +74,9 @@ export class DocumentRetrieval {
     maxPerSource: number,
   ): Promise<StoredDocument[]> {
     const queryEmbedding = await this.#embedder(retrievalInput)
+    // Current prototype implementation ranks all stored documents in application code.
+    // For larger datasets, retrieval should first use vector search in the DB to fetch
+    // a smaller candidate set, then apply keyword/category reranking on that subset.
     const documents = await this.#vectorDBStore.getAllDocuments()
     const queryTerms = extractQueryTerms(retrievalInput)
 

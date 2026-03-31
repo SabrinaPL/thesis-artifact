@@ -7,6 +7,11 @@ import { chunkText } from '../utils/textChunker.js'
 import { closeBrowser } from '../utils/parser.js'
 import { createDocumentHash } from '../utils/hashDocument.js'
 import { extractKeywords } from '../utils/keywordExtractor.js'
+import {
+  shouldSkipDocument,
+  normalizeUrl,
+  getSourceVariants,
+} from '../utils/documentIngestionHelpers.js'
 
 /**
  * DocumentIngestion class is responsible for handling the ingestion of documents into the system. It retrieves the document URLs, parses and preprocesses the documents, and communicates with the VectorDBStore to store the vector embeddings of the documents.
@@ -46,7 +51,9 @@ export class DocumentIngestion {
 
   async ingestDocument(document: DocumentEntry) {
     const source = normalizeUrl(document.url)
+    const sourceVariants = getSourceVariants(document.url)
     console.log(`\n--- Ingesting: ${source} ---`)
+    console.log('Source variants for DB lookup:', sourceVariants)
 
     // Step 1: Select parser for this source
     const parser = await getParser(source)
@@ -86,7 +93,8 @@ export class DocumentIngestion {
     const existingSourceDocument =
       await this.#vectorDBStore.findDocumentBySource(source)
 
-    const existingChunks = await this.#vectorDBStore.getDocumentsBySource(source)
+    const existingChunks =
+      await this.#vectorDBStore.getDocumentsBySource(source)
 
     // Step 6: Skip if unchanged
     if (existingSourceDocument?.documentHash === documentHash) {
@@ -134,26 +142,6 @@ export class DocumentIngestion {
         maxKeywords: 10,
       })
 
-      //   // Step 11: Insert each chunk into the vector DB with its corresponding embedding and metadata
-      //   await this.#vectorDBStore.upsertSourceDocument({
-      //     source: document.url,
-      //     documentHash,
-      //     title: title as string,
-      //     category: document.category,
-      //     description: document.description,
-      //     metadata: { ...parsedDocument.metadata },
-      //   })
-
-      // for (const [index, chunk] of chunks.entries()) {
-      //   const embedding = await this.#embedder(chunk)
-
-      //   const keywords = extractKeywords(chunk, {
-      //     title,
-      //     category: document.category,
-      //     description: document.description,
-      //     maxKeywords: 10,
-      //   })
-
       await this.#vectorDBStore.insertToDB(chunk, embedding, {
         ...parsedDocument.metadata,
         source,
@@ -178,91 +166,32 @@ export class DocumentIngestion {
   }
 }
 
-    function shouldSkipDocument(title: string, text: string): boolean {
-  const normalizedTitle = title.toLowerCase()
-  const normalizedText = text.toLowerCase()
+// await this.#vectorDBStore.insertToDB(parsedDocument.text, parsedDocument.metadata);
 
-  const blockedTitlePatterns = [
-    'temporarily unavailable',
-    'just a moment',
-    'access denied',
-    'attention required',
-    'captcha',
-  ]
+// insert each chunk into the vector DB with its corresponding embedding and metadata
+// (including source document and chunk index for traceability)
 
-  const blockedTextPatterns = [
-    'temporarily unavailable',
-    'access denied',
-    'enable javascript and cookies',
-    'verify you are human',
-    'captcha',
-    'cloudflare',
-  ]
+// for (const [index, chunk] of chunks.entries()) {
+//   const embedding = await createEmbedding(chunk)
 
-  const matchedTitlePattern = blockedTitlePatterns.find((pattern) =>
-    normalizedTitle.includes(pattern),
-  )
+// // Use a unique chunk key to prevent duplicates in the database
+// // TODO: consider using a more robust method for generating unique chunk keys,
+// // such as hashing the chunk content or using a UUID,
+// // especially if the same document might be ingested multiple times.
+// // Or consider replacing the existing chunks with same resource and reingest
+// const chunkKey = `${rawDocument}::${index}`
 
-  if (matchedTitlePattern) {
-    console.warn(`Skipping because blocked title matched: ${matchedTitlePattern}`)
-    return true
-  }
-
-  const matchedTextPattern = blockedTextPatterns.find((pattern) =>
-    normalizedText.includes(pattern),
-  )
-
-  if (matchedTextPattern) {
-    console.warn(`Skipping because blocked text matched: ${matchedTextPattern}`)
-    return true
-  }
-
-  if (text.trim().length < 800) {
-    console.warn(`Skipping because text is too short: ${text.trim().length}`)
-    return true
-  }
-
-  return false
-}
-
-function normalizeUrl(url: string): string {
-  const normalized = new URL(url.trim())
-
-  if (normalized.pathname.length > 1 && normalized.pathname.endsWith('/')) {
-    normalized.pathname = normalized.pathname.slice(0, -1)
-  }
-
-  normalized.hostname = normalized.hostname.toLowerCase()
-
-  return normalized.toString()
-}
-
-  // await this.#vectorDBStore.insertToDB(parsedDocument.text, parsedDocument.metadata);
-
-  // insert each chunk into the vector DB with its corresponding embedding and metadata
-  // (including source document and chunk index for traceability)
-
-  // for (const [index, chunk] of chunks.entries()) {
-  //   const embedding = await createEmbedding(chunk)
-
-  // // Use a unique chunk key to prevent duplicates in the database
-  // // TODO: consider using a more robust method for generating unique chunk keys,
-  // // such as hashing the chunk content or using a UUID,
-  // // especially if the same document might be ingested multiple times.
-  // // Or consider replacing the existing chunks with same resource and reingest
-  // const chunkKey = `${rawDocument}::${index}`
-
-  //   await this.#vectorDBStore.insertToDB(
-  //     // chunkKey,
-  //     chunk,
-  //     embedding,
-  //     {
-  //       ...parsedDocument.metadata,
-  //       source: document.url,
-  //       category: document.category,
-  //       description: document.description,
-  // TODO: do we want to add more metadata fields here, like title and keywords?
-  //       chunkIndex: index,
-  //     }
-  //   )
-  // }
+//   await this.#vectorDBStore.insertToDB(
+//     // chunkKey,
+//     chunk,
+//     embedding,
+//     {
+//       ...parsedDocument.metadata,
+//       source: document.url,
+//       category: document.category,
+//       description: document.description,
+// TODO: do we want to add more metadata fields here, like title and keywords?
+//       chunkIndex: index,
+//     }
+//   )
+// }

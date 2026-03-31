@@ -1,0 +1,84 @@
+export function shouldSkipDocument(title: string, text: string): boolean {
+  const normalizedTitle = title.toLowerCase()
+  const normalizedText = text.toLowerCase()
+
+  const blockedTitlePatterns = [
+    'temporarily unavailable',
+    'just a moment',
+    'access denied',
+    'attention required',
+    'captcha',
+  ]
+
+  const blockedTextPatterns = [
+    'temporarily unavailable',
+    'access denied',
+    'enable javascript and cookies',
+    'verify you are human',
+    'captcha',
+    'cloudflare',
+  ]
+
+  const matchedTitlePattern = blockedTitlePatterns.find((pattern) =>
+    normalizedTitle.includes(pattern),
+  )
+
+  if (matchedTitlePattern) {
+    console.warn(
+      `Skipping because blocked title matched: ${matchedTitlePattern}`,
+    )
+    return true
+  }
+
+  const matchedTextPattern = blockedTextPatterns.find((pattern) =>
+    normalizedText.includes(pattern),
+  )
+
+  if (matchedTextPattern) {
+    console.warn(`Skipping because blocked text matched: ${matchedTextPattern}`)
+    return true
+  }
+
+  const minLengthEnv = process.env.DOCUMENT_MIN_LENGTH
+  const minLength =
+    typeof minLengthEnv === 'string' && minLengthEnv.trim() !== ''
+      ? Number.parseInt(minLengthEnv, 10)
+      : 0
+
+  if (Number.isNaN(minLength) || minLength < 0) {
+    console.warn(
+      `Invalid DOCUMENT_MIN_LENGTH value "${minLengthEnv}", disabling minimum length check.`,
+    )
+  } else if (minLength > 0 && text.trim().length < minLength) {
+    console.warn(
+      `Skipping because text is too short: ${text.trim().length} (min: ${minLength})`,
+    )
+    return true
+  }
+
+  if (text.trim().length < 800) {
+    console.warn(`Skipping because text is too short: ${text.trim().length}`)
+    return true
+  }
+
+  return false
+}
+
+export function normalizeUrl(url: string): string {
+  const normalized = new URL(url.trim())
+
+  if (normalized.pathname.length > 1 && normalized.pathname.endsWith('/')) {
+    normalized.pathname = normalized.pathname.slice(0, -1)
+  }
+
+  normalized.hostname = normalized.hostname.toLowerCase()
+
+  return normalized.toString()
+}
+
+export function getSourceVariants(url: string): string[] {
+  const raw = url.trim()
+  const normalized = normalizeUrl(url)
+
+  return [...new Set([raw, normalized])]
+}
