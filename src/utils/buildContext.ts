@@ -14,6 +14,13 @@ export function buildContextFromDocuments(documents: StoredDocument[]): string {
         `Source: ${doc.source}`,
         `Chunk Index: ${doc.chunkIndex}`,
         `Content: ${doc.text}`,
+        `Category: ${doc.category ?? 'N/A'}`,
+        `Description: ${doc.description ?? 'N/A'}`,
+        `Keywords: ${
+          Array.isArray(doc.keywords) && doc.keywords.length > 0
+            ? doc.keywords.join(', ')
+            : 'N/A'
+        }`,
       ].join('\n')
     })
     .join('\n\n---\n\n')

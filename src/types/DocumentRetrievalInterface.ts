@@ -11,14 +11,10 @@ import type { StoredDocument } from './StoredDocument.js'
 // }
 
 export interface DocumentRetrievalInterface {
-  retrieveDocuments(
-    query: string,
-    context?: string,
-  ): Promise<StoredDocument[]>
+  retrieveDocuments(query: string, context?: string): Promise<StoredDocument[]>
 
   retrieveDocumentsSelfEval(
     generatedIaC: GeneratedIaC,
     originalQuery: string,
   ): Promise<StoredDocument[]>
 }
-

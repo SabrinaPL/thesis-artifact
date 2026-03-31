@@ -45,12 +45,15 @@ export class DocumentIngestion {
   }
 
   async ingestDocument(document: DocumentEntry) {
-    console.log(`\n--- Ingesting: ${document.url} ---`)
+    const source = normalizeUrl(document.url)
+    console.log(`\n--- Ingesting: ${source} ---`)
 
-    const parser = await getParser(document.url)
-    console.log(`Parser selected for: ${document.url}`)
+    // Step 1: Select parser for this source
+    const parser = await getParser(source)
+    console.log(`Parser selected for: ${source}`)
 
-    const parsedDocument = await parser(document.url)
+    // Step 2: Parse document
+    const parsedDocument = await parser(source)
     console.log(
       `Parsed document title: "${parsedDocument.metadata.title ?? 'N/A'}"`,
     )
@@ -58,10 +61,9 @@ export class DocumentIngestion {
       `Parsed text length: ${parsedDocument.text?.length ?? 0} characters`,
     )
 
-    // Fallback if the parser fails to extract text content
+    // Step 3: Skip if no usable text was extracted
     if (!parsedDocument.text || !parsedDocument.text.trim()) {
-      console.warn(`Skipping document with empty text: ${document.url}`)
-
+      console.warn(`Skipping document with empty text: ${source}`)
       return
     }
 
@@ -69,33 +71,62 @@ export class DocumentIngestion {
     const documentHash = createDocumentHash(normalizedText)
     console.log(`Document hash: ${documentHash}`)
 
-    const chunks = chunkText(normalizedText)
-    console.log(`Chunks created: ${chunks.length}`)
-    chunks.forEach((chunk, i) =>
-      console.log(`  Chunk ${i + 1}: ${chunk.length} characters`),
-    )
-
-    console.log(`--- Done: ${document.url} ---`)
-
-    // ! return <-- Uncomment this return to skip DB operations, for testing only parsing and chunking (w.o. affecting DB with test data)
-
     const title =
       typeof parsedDocument.metadata.title === 'string'
         ? parsedDocument.metadata.title
         : ''
 
-    await this.#vectorDBStore.upsertSourceDocument({
-      source: document.url,
-      documentHash,
-      title: title as string,
-      category: document.category,
-      description: document.description,
-      metadata: { ...parsedDocument.metadata },
-    })
+    // Step 4: Skip blocked / low-quality pages
+    if (shouldSkipDocument(title, normalizedText)) {
+      console.warn(`Skipping low-quality or blocked document: ${source}`)
+      return
+    }
 
+    // Step 5: Check existing source document + chunks
+    const existingSourceDocument =
+      await this.#vectorDBStore.findDocumentBySource(source)
+
+    const existingChunks = await this.#vectorDBStore.getDocumentsBySource(source)
+
+    // Step 6: Skip if unchanged
+    if (existingSourceDocument?.documentHash === documentHash) {
+      console.log('--- HASH CHECK ---')
+      console.log('SOURCE:', source)
+      console.log('EXISTING SOURCE DOC:', existingSourceDocument)
+      console.log('EXISTING HASH:', existingSourceDocument.documentHash)
+      console.log('NEW HASH:', documentHash)
+      console.log(`Skipping ingestion, document unchanged: ${source}`)
+      console.log('EXISTING CHUNKS:', existingChunks.length)
+      return
+    }
+
+    // Step 7: If old chunks exist, remove them before re-ingesting
+    if (existingChunks.length > 0) {
+      console.log(`Cleaning old chunks for source: ${source}`)
+      await this.#vectorDBStore.deleteDocumentsBySource(source)
+      console.log(`Deleted old chunks for source: ${source}`)
+    }
+
+    // Step 8: Chunk text
+    const chunks = chunkText(normalizedText)
+    console.log(`Chunks created: ${chunks.length}`)
+
+    chunks.forEach((chunk, i) =>
+      console.log(`  Chunk ${i + 1}: ${chunk.length} characters`),
+    )
+
+    console.log(`--- Done: ${source} ---`)
+
+    // ! return <-- Uncomment this return to skip DB operations, for testing only parsing and chunking (w.o. affecting DB with test data)
+
+    // Step 9: Insert chunk embeddings + metadata
     for (const [index, chunk] of chunks.entries()) {
       const embedding = await this.#embedder(chunk)
 
+      // Step 11: Extract keywords for the chunk using the keyword extractor utility,
+      // which considers the chunk content as well as the document-level metadata
+      // (title, category, description) to generate relevant keywords that can enhance
+      // retrieval performance.
       const keywords = extractKeywords(chunk, {
         title,
         category: document.category,
@@ -103,9 +134,29 @@ export class DocumentIngestion {
         maxKeywords: 10,
       })
 
+      //   // Step 11: Insert each chunk into the vector DB with its corresponding embedding and metadata
+      //   await this.#vectorDBStore.upsertSourceDocument({
+      //     source: document.url,
+      //     documentHash,
+      //     title: title as string,
+      //     category: document.category,
+      //     description: document.description,
+      //     metadata: { ...parsedDocument.metadata },
+      //   })
+
+      // for (const [index, chunk] of chunks.entries()) {
+      //   const embedding = await this.#embedder(chunk)
+
+      //   const keywords = extractKeywords(chunk, {
+      //     title,
+      //     category: document.category,
+      //     description: document.description,
+      //     maxKeywords: 10,
+      //   })
+
       await this.#vectorDBStore.insertToDB(chunk, embedding, {
         ...parsedDocument.metadata,
-        source: document.url,
+        source,
         category: document.category,
         description: document.description,
         documentHash,
@@ -114,7 +165,77 @@ export class DocumentIngestion {
         keywords,
       })
     }
+
+    // Step 10: Upsert source document metadata last
+    await this.#vectorDBStore.upsertSourceDocument({
+      source,
+      documentHash,
+      title,
+      category: document.category,
+      description: document.description,
+      metadata: { ...parsedDocument.metadata },
+    })
   }
+}
+
+    function shouldSkipDocument(title: string, text: string): boolean {
+  const normalizedTitle = title.toLowerCase()
+  const normalizedText = text.toLowerCase()
+
+  const blockedTitlePatterns = [
+    'temporarily unavailable',
+    'just a moment',
+    'access denied',
+    'attention required',
+    'captcha',
+  ]
+
+  const blockedTextPatterns = [
+    'temporarily unavailable',
+    'access denied',
+    'enable javascript and cookies',
+    'verify you are human',
+    'captcha',
+    'cloudflare',
+  ]
+
+  const matchedTitlePattern = blockedTitlePatterns.find((pattern) =>
+    normalizedTitle.includes(pattern),
+  )
+
+  if (matchedTitlePattern) {
+    console.warn(`Skipping because blocked title matched: ${matchedTitlePattern}`)
+    return true
+  }
+
+  const matchedTextPattern = blockedTextPatterns.find((pattern) =>
+    normalizedText.includes(pattern),
+  )
+
+  if (matchedTextPattern) {
+    console.warn(`Skipping because blocked text matched: ${matchedTextPattern}`)
+    return true
+  }
+
+  if (text.trim().length < 800) {
+    console.warn(`Skipping because text is too short: ${text.trim().length}`)
+    return true
+  }
+
+  return false
+}
+
+function normalizeUrl(url: string): string {
+  const normalized = new URL(url.trim())
+
+  if (normalized.pathname.length > 1 && normalized.pathname.endsWith('/')) {
+    normalized.pathname = normalized.pathname.slice(0, -1)
+  }
+
+  normalized.hostname = normalized.hostname.toLowerCase()
+
+  return normalized.toString()
+}
 
   // await this.#vectorDBStore.insertToDB(parsedDocument.text, parsedDocument.metadata);
 
@@ -145,4 +266,3 @@ export class DocumentIngestion {
   //     }
   //   )
   // }
-}
