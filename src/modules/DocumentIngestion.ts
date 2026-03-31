@@ -46,7 +46,9 @@ export class DocumentIngestion {
 
   async ingestDocument(document: DocumentEntry) {
     const source = normalizeUrl(document.url)
+    const sourceVariants = getSourceVariants(document.url)
     console.log(`\n--- Ingesting: ${source} ---`)
+    console.log('Source variants for DB lookup:', sourceVariants)
 
     // Step 1: Select parser for this source
     const parser = await getParser(source)
@@ -220,6 +222,23 @@ function shouldSkipDocument(title: string, text: string): boolean {
     return true
   }
 
+  const minLengthEnv = process.env.DOCUMENT_MIN_LENGTH
+  const minLength =
+    typeof minLengthEnv === 'string' && minLengthEnv.trim() !== ''
+      ? Number.parseInt(minLengthEnv, 10)
+      : 0
+
+  if (Number.isNaN(minLength) || minLength < 0) {
+    console.warn(
+      `Invalid DOCUMENT_MIN_LENGTH value "${minLengthEnv}", disabling minimum length check.`,
+    )
+  } else if (minLength > 0 && text.trim().length < minLength) {
+    console.warn(
+      `Skipping because text is too short: ${text.trim().length} (min: ${minLength})`,
+    )
+    return true
+  }
+
   if (text.trim().length < 800) {
     console.warn(`Skipping because text is too short: ${text.trim().length}`)
     return true
@@ -238,6 +257,13 @@ function normalizeUrl(url: string): string {
   normalized.hostname = normalized.hostname.toLowerCase()
 
   return normalized.toString()
+}
+
+function getSourceVariants(url: string): string[] {
+  const raw = url.trim()
+  const normalized = normalizeUrl(url)
+
+  return [...new Set([raw, normalized])]
 }
 
 // await this.#vectorDBStore.insertToDB(parsedDocument.text, parsedDocument.metadata);
