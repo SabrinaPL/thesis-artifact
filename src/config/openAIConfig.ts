@@ -10,5 +10,6 @@ export function openAIConfig() {
     openAIApiKey: process.env.OPENAI_API_KEY,
     timeout: 300000,
     maxRetries: 3,
+    temperature: 1, // Default temperature of 1 is used
   })
 }

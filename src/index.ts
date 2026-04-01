@@ -5,6 +5,7 @@ import { DocumentRetrieval } from './modules/DocumentRetrieval.js'
 import { saveExperimentResults } from './utils/experimentWriter.js'
 import { LLM } from './modules/LLM.js'
 import { openAIConfig } from './config/openAIConfig.js'
+import { anthropicConfig } from './config/anthropicConfig.js'
 import { openAIEmbedderConfig } from './config/openAIEmbedderConfig.js'
 import { connectDB } from './config/db.js'
 import { VectorDocumentModel } from './models/VectorDocumentModel.js'
@@ -30,6 +31,7 @@ import {
 
 const openAIModel = openAIConfig()
 const openAIEmbedder = openAIEmbedderConfig()
+const anthropicModel = anthropicConfig()
 
 const vectorDBStore = new VectorDBStore(
   VectorDocumentModel,
@@ -38,6 +40,7 @@ const vectorDBStore = new VectorDBStore(
 const ingestion = new DocumentIngestion(vectorDBStore, openAIEmbedder)
 const retrieval = new DocumentRetrieval(vectorDBStore, openAIEmbedder)
 const llm = new LLM(openAIModel)
+// const llm = new LLM(anthropicModel) // Test using the Anthropic model for abstractive summary and generation
 const orchestrator = new RAGOrchestrator(
   ingestion,
   retrieval,
