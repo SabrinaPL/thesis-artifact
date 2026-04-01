@@ -17,5 +17,8 @@ export const SELF_EVAL_PROMPT = `
 
     1. Evaluate the Infrastructure as Code against the retrieved documents. 
     2. Check for potential security vulnerabilities and misconfigurations and refine / improve the generated IaC if / as needed. 
-    3. Add inline comments to the final generated IaC, aimed at assisting junior developers, new to DevOps and IaC, in better understanding the code (like a tutor would do).
+    3. Add explanatory inline comments to the final generated IaC, aimed at assisting junior developers new to DevOps and IaC in better understanding the code, while pedagogically teaching them about IaC concepts and best practices (like a tutor would do). Keep in mind that the comments are aimed at beginners, so don't assume prior knowledge of DevOps or IaC concepts.
+    4. Provide a detailed explanation of the improvements made to the code, including the rationale behind each change and how it enhances security, code quality, or maintainability.
+
+    Please ensure that the final generated IaC code is secure, follows best practices, and is well-commented to facilitate learning for junior developers new to DevOps and IaC.
 `
