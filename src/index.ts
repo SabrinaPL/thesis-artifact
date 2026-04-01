@@ -41,11 +41,7 @@ const ingestion = new DocumentIngestion(vectorDBStore, openAIEmbedder)
 const retrieval = new DocumentRetrieval(vectorDBStore, openAIEmbedder)
 const llm = new LLM(openAIModel)
 // const llm = new LLM(anthropicModel) // Test using the Anthropic model for abstractive summary and generation
-const orchestrator = new RAGOrchestrator(
-  ingestion,
-  retrieval,
-  llm,
-)
+const orchestrator = new RAGOrchestrator(ingestion, retrieval, llm)
 
 // Connect to the database before running the ingestion pipeline
 await connectDB()
@@ -55,13 +51,15 @@ await connectDB()
 // const allDocs = await vectorDBStore.getAllDocuments()
 // console.log('ALL DOCUMENTS:', allDocs.slice(0, 5)) // Log the first 5 documents to verify the ingestion process;
 
-
 // Run the RAG pipeline with the first prompt
 const generatedIaC = await orchestrator.runRAGPipeline(PROMPT_FIRST_EXPERIMENT)
 
 console.log('GENERATED IAC:\n', generatedIaC)
 
-const generatedIaCSelfEval = await orchestrator.runRAGPipelineSelfEval(PROMPT_FIRST_EXPERIMENT, generatedIaC)
+const generatedIaCSelfEval = await orchestrator.runRAGPipelineSelfEval(
+  PROMPT_FIRST_EXPERIMENT,
+  generatedIaC,
+)
 
 console.log('GENERATED IAC SELF-EVAL:\n', generatedIaCSelfEval)
 

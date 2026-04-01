@@ -87,6 +87,14 @@ export class DocumentRetrieval {
       this.#vectorDBStore.getAllDocuments(),
     ])
     const queryTerms = extractQueryTerms(retrievalInput)
-    return rankDocuments(documents, queryEmbedding, queryTerms, retrievalInput, limit, maxPerSource, categoryFilter)
+    return rankDocuments(
+      documents,
+      queryEmbedding,
+      queryTerms,
+      retrievalInput,
+      limit,
+      maxPerSource,
+      categoryFilter,
+    )
   }
 }

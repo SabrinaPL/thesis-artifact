@@ -3,7 +3,7 @@ import { keywordOverlapScore, categoryMatchScore } from './retrievalScoring.js'
 
 /**
  * Utility function to rank documents based on a combination of semantic similarity, keyword overlap, and category match. The function takes into account the query embedding, extracted query terms, and the original retrieval input to calculate a final score for each document. The results are then sorted by score and limited to a specified number of top results, with a maximum number of documents allowed per source to ensure diversity in the retrieved documents.
- * 
+ *
  * @param documents - Array of documents to be ranked
  * @param queryEmbedding - Embedding vector of the query
  * @param queryTerms - Extracted terms from the query
@@ -28,8 +28,12 @@ export function rankDocuments(
     .map((doc) => {
       const semanticScore = cosineSimilarity(queryEmbedding, doc.embedding)
       const keywordScore = keywordOverlapScore(queryTerms, doc.keywords ?? [])
-      const categoryScore = categoryMatchScore(retrievalInput, doc.category ?? '')
-      const finalScore = semanticScore * 0.7 + keywordScore * 0.2 + categoryScore * 0.1
+      const categoryScore = categoryMatchScore(
+        retrievalInput,
+        doc.category ?? '',
+      )
+      const finalScore =
+        semanticScore * 0.7 + keywordScore * 0.2 + categoryScore * 0.1
       return { ...doc, score: finalScore }
     })
     .sort((a, b) => b.score - a.score)
