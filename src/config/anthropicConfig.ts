@@ -6,7 +6,7 @@ export function anthropicConfig() {
   }
 
   return new ChatAnthropic({
-    model: 'claude-opus-4-6', // Chosen since it's the most intelligent model for building agents and coding, according to Claude API Docs (https://platform.claude.com/docs/en/about-claude/models/overview)
+    model: process.env.ANTHROPIC_MODEL || 'claude-opus-4-6', // Chosen since it's the most intelligent model for building agents and coding, according to Claude API Docs (https://platform.claude.com/docs/en/about-claude/models/overview)
     apiKey: process.env.ANTHROPIC_API_KEY,
     clientOptions: { timeout: 300000 },
     maxRetries: 3,
