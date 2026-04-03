@@ -1,5 +1,3 @@
-// TODO: add prompts (complete IaC tasks / instructions, with increasing difficulty level)
-
 export const PROMPT_FIRST_EXPERIMENT = `
     Task:
 

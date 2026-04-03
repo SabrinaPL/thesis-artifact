@@ -2,14 +2,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { RAGOrchestrator } from '../src/orchestrator/RAGOrchestrator.js'
 import type { DocumentIngestionInterface } from '../src/types/DocumentIngestionInterface.js'
 import type { DocumentRetrievalInterface } from '../src/types/DocumentRetrievalInterface.js'
-import type { GenerationInterface } from '../src/types/GenerationInterface.js'
+import type { LLMInterface } from '../src/types/LLMInterface.js'
 import type { StoredDocument } from '../src/types/StoredDocument.js'
-import type { GeneratedIaC } from '../src/types/GeneratedIaC.js'
 
 describe('RAGOrchestrator', () => {
   let mockIngestion: DocumentIngestionInterface
   let mockRetrieval: DocumentRetrievalInterface
-  let mockGeneration: GenerationInterface
+  let mockLLM: LLMInterface
 
   const mockDocuments: StoredDocument[] = [
     {
@@ -40,8 +39,10 @@ describe('RAGOrchestrator', () => {
       retrieveDocumentsSelfEval: vi.fn(),
     }
 
-    mockGeneration = {
-      generate: vi.fn(),
+    mockLLM = {
+      generateIaC: vi.fn(),
+      generateIaCSelfEval: vi.fn(),
+      generateAbstractiveSummary: vi.fn(),
     }
   })
 
@@ -51,7 +52,7 @@ describe('RAGOrchestrator', () => {
     const orchestrator = new RAGOrchestrator(
       mockIngestion,
       mockRetrieval,
-      mockGeneration,
+      mockLLM,
     )
 
     await orchestrator.runIngestionPipeline()
@@ -59,16 +60,21 @@ describe('RAGOrchestrator', () => {
     expect(mockIngestion.ingestDocuments).toHaveBeenCalledOnce()
   })
 
-  it('should delegate runRetrievalPipeline to retrievalInstance.retrieveDocuments', async () => {
+  it('should run RAG pipeline by retrieving documents, summarizing, and generating IaC', async () => {
+    const mockSummary = 'Abstractive summary of retrieved docs'
+    const mockGeneratedIaC = 'resource "openstack_compute_instance_v2" "web" {}'
+
     vi.mocked(mockRetrieval.retrieveDocuments).mockResolvedValue(mockDocuments)
+    vi.mocked(mockLLM.generateAbstractiveSummary).mockResolvedValue(mockSummary)
+    vi.mocked(mockLLM.generateIaC).mockResolvedValue(mockGeneratedIaC)
 
     const orchestrator = new RAGOrchestrator(
       mockIngestion,
       mockRetrieval,
-      mockGeneration,
+      mockLLM,
     )
 
-    const result = await orchestrator.runRetrievalPipeline(
+    const result = await orchestrator.runRAGPipeline(
       'Generate OpenStack Terraform',
       'Use nginx',
     )
@@ -77,58 +83,39 @@ describe('RAGOrchestrator', () => {
       'Generate OpenStack Terraform',
       'Use nginx',
     )
-    expect(result).toEqual(mockDocuments)
+    expect(mockLLM.generateAbstractiveSummary).toHaveBeenCalledOnce()
+    expect(mockLLM.generateIaC).toHaveBeenCalledWith(
+      mockSummary,
+      'Generate OpenStack Terraform',
+    )
+    expect(result).toBe(mockGeneratedIaC)
   })
 
-  it('should delegate runGenerationPipeline to retrieval and generation modules', async () => {
-    const generatedIaC: GeneratedIaC = {
-      content: 'generated config',
-    }
-
-    vi.mocked(mockGeneration.generate).mockResolvedValue(generatedIaC)
-
-    const orchestrator = new RAGOrchestrator(
-      mockIngestion,
-      mockRetrieval,
-      mockGeneration,
-    )
-
-    const result = await orchestrator.runGenerationPipeline(
-      'Generate an OpenStack web server',
-      mockDocuments,
-    )
-
-    expect(mockGeneration.generate).toHaveBeenCalledWith(
-      'Generate an OpenStack web server',
-      mockDocuments,
-    )
-    expect(result).toEqual(generatedIaC)
-  })
-
-  it('should delegate runRetrievalPipelineSelfEval to retrievalInstance.retrieveDocumentsSelfEval', async () => {
-    const generatedIaC: GeneratedIaC = {
-      content: 'resource "openstack_compute_instance_v2" "web" {}',
-    }
+  it('should run RAG self-eval pipeline by retrieving, summarizing, and generating self-evaluated IaC', async () => {
+    const mockSummary = 'Abstractive summary for self-eval'
+    const mockSelfEvalResult = '# Improved IaC with inline comments'
+    const mockGeneratedIaC = 'resource "openstack_compute_instance_v2" "web" {}'
 
     vi.mocked(mockRetrieval.retrieveDocumentsSelfEval).mockResolvedValue(
       mockDocuments,
     )
+    vi.mocked(mockLLM.generateAbstractiveSummary).mockResolvedValue(mockSummary)
+    vi.mocked(mockLLM.generateIaCSelfEval).mockResolvedValue(mockSelfEvalResult)
 
     const orchestrator = new RAGOrchestrator(
       mockIngestion,
       mockRetrieval,
-      mockGeneration,
+      mockLLM,
     )
 
-    const result = await orchestrator.runRetrievalPipelineSelfEval(
-      generatedIaC,
-      'Generate an OpenStack server',
+    const result = await orchestrator.runRAGPipelineSelfEval(
+      'Generate an OpenStack web server',
+      mockGeneratedIaC,
     )
 
-    expect(mockRetrieval.retrieveDocumentsSelfEval).toHaveBeenCalledWith(
-      generatedIaC,
-      'Generate an OpenStack server',
-    )
-    expect(result).toEqual(mockDocuments)
+    expect(mockRetrieval.retrieveDocumentsSelfEval).toHaveBeenCalledOnce()
+    expect(mockLLM.generateAbstractiveSummary).toHaveBeenCalledOnce()
+    expect(mockLLM.generateIaCSelfEval).toHaveBeenCalledOnce()
+    expect(result).toBe(mockSelfEvalResult)
   })
 })

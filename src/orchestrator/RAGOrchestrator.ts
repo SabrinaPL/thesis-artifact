@@ -1,7 +1,7 @@
 import type { DocumentIngestionInterface } from '../types/DocumentIngestionInterface.js'
 import type { DocumentRetrievalInterface } from '../types/DocumentRetrievalInterface.js'
 import type { LLMInterface } from '../types/LLMInterface.js'
-import type { GeneratedIaC } from '../types/GeneratedIaC.js'
+// import type { GeneratedIaC } from '../types/GeneratedIaC.js'
 import type { StoredDocument } from '../types/StoredDocument.js'
 import { buildContextFromDocuments } from '../utils/buildContext.js'
 import {
@@ -10,7 +10,7 @@ import {
   SELF_EVAL_CLEAN_CODE_QUERY,
 } from '../prompts/selfEvalPrompts.js'
 import { ABSTRACTIVE_SUMMARY_PROMPT } from '../prompts/summaryPrompt.js'
-import { retrieveDocuments } from './../utils/urlRetriever'
+// import { retrieveDocuments } from './../utils/urlRetriever.js'
 
 /**
  * RAGOrchestrator class is responsible for orchestrating the Retrieval-Augmented Generation (RAG) process.
