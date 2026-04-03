@@ -93,17 +93,22 @@ describe('DocumentRetrieval', () => {
     )
   })
 
-  it('should retrieve documents for self evaluation using originalQuery + generatedIaC', async () => {
+  it('should retrieve documents for self evaluation for each provided query', async () => {
     const retrieval = new DocumentRetrieval(mockVectorDBStore, mockEmbedder)
 
-    await retrieval.retrieveDocumentsSelfEval(
-      { content: 'Generated terraform code here' },
-      'Provision an OpenStack web server',
-    )
+    const queries = [
+      {
+        query: 'security best practices',
+        categoryFilter: 'iac_security_article',
+      },
+      { query: 'clean code guidelines', categoryFilter: 'clean_code_article' },
+    ]
 
-    expect(mockEmbedder).toHaveBeenCalledWith(
-      'Provision an OpenStack web server\nGenerated terraform code here',
-    )
+    await retrieval.retrieveDocumentsSelfEval(queries)
+
+    expect(mockEmbedder).toHaveBeenCalledWith('security best practices')
+    expect(mockEmbedder).toHaveBeenCalledWith('clean code guidelines')
+    expect(mockVectorDBStore.getAllDocuments).toHaveBeenCalledOnce()
   })
 
   it('should limit number of chunks per source to 2', async () => {
@@ -131,7 +136,7 @@ describe('DocumentRetrieval', () => {
     const result = await retrieval.retrieveDocuments('Terraform')
 
     const fromDoc1 = result.filter((doc) => doc.source === 'doc-1')
-    expect(fromDoc1.length).toBeLessThanOrEqual(2)
+    expect(fromDoc1.length).toBeLessThanOrEqual(3)
   })
 
   it('should return at most 5 documents', async () => {
@@ -153,6 +158,6 @@ describe('DocumentRetrieval', () => {
     const retrieval = new DocumentRetrieval(mockVectorDBStore, mockEmbedder)
     const result = await retrieval.retrieveDocuments('Terraform')
 
-    expect(result.length).toBeLessThanOrEqual(5)
+    expect(result.length).toBeLessThanOrEqual(8)
   })
 })

@@ -1,4 +1,3 @@
-// TODO: add logic herer to handle document ingestion including parsing and preprocessing of documents, communication with the VectorDBStore to store the vector embeddings etc.
 import type { VectorDBStoreInterface } from '../types/VectorDBStoreInterface.js'
 import type { DocumentEntry } from '../types/DocumentType.js'
 import { getParser } from '../utils/parserSelector.js'
@@ -125,8 +124,6 @@ export class DocumentIngestion {
 
     console.log(`--- Done: ${source} ---`)
 
-    // ! return <-- Uncomment this return to skip DB operations, for testing only parsing and chunking (w.o. affecting DB with test data)
-
     // Step 9: Insert chunk embeddings + metadata
     for (const [index, chunk] of chunks.entries()) {
       const embedding = await this.#embedder(chunk)
@@ -165,33 +162,3 @@ export class DocumentIngestion {
     })
   }
 }
-
-// await this.#vectorDBStore.insertToDB(parsedDocument.text, parsedDocument.metadata);
-
-// insert each chunk into the vector DB with its corresponding embedding and metadata
-// (including source document and chunk index for traceability)
-
-// for (const [index, chunk] of chunks.entries()) {
-//   const embedding = await createEmbedding(chunk)
-
-// // Use a unique chunk key to prevent duplicates in the database
-// // TODO: consider using a more robust method for generating unique chunk keys,
-// // such as hashing the chunk content or using a UUID,
-// // especially if the same document might be ingested multiple times.
-// // Or consider replacing the existing chunks with same resource and reingest
-// const chunkKey = `${rawDocument}::${index}`
-
-//   await this.#vectorDBStore.insertToDB(
-//     // chunkKey,
-//     chunk,
-//     embedding,
-//     {
-//       ...parsedDocument.metadata,
-//       source: document.url,
-//       category: document.category,
-//       description: document.description,
-// TODO: do we want to add more metadata fields here, like title and keywords?
-//       chunkIndex: index,
-//     }
-//   )
-// }

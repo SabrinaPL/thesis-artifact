@@ -1,10 +1,16 @@
 import type { DocumentIngestionInterface } from '../types/DocumentIngestionInterface.js'
 import type { DocumentRetrievalInterface } from '../types/DocumentRetrievalInterface.js'
-import type { GenerationInterface } from '../types/GenerationInterface.js'
-import type { GeneratedIaC } from '../types/GeneratedIaC.js'
+import type { LLMInterface } from '../types/LLMInterface.js'
+// import type { GeneratedIaC } from '../types/GeneratedIaC.js'
 import type { StoredDocument } from '../types/StoredDocument.js'
-// import type { LLMInterface } from '../types/LLMInterface.js'
-// import { SELF_EVAL_QUERY, SELF_EVAL_PROMPT } from "../prompts/selfEvalPrompts.js";
+import { buildContextFromDocuments } from '../utils/buildContext.js'
+import {
+  SELF_EVAL_PROMPT,
+  SELF_EVAL_SECURITY_QUERY,
+  SELF_EVAL_CLEAN_CODE_QUERY,
+} from '../prompts/selfEvalPrompts.js'
+import { ABSTRACTIVE_SUMMARY_PROMPT } from '../prompts/summaryPrompt.js'
+// import { retrieveDocuments } from './../utils/urlRetriever.js'
 
 /**
  * RAGOrchestrator class is responsible for orchestrating the Retrieval-Augmented Generation (RAG) process.
@@ -21,80 +27,99 @@ export class RAGOrchestrator {
   // #generatedIaCSelfEvaluated: string | null;
   #ingestionInstance: DocumentIngestionInterface
   #retrievalInstance: DocumentRetrievalInterface
-  #generationInstance: GenerationInterface
-  // #LLMInstance: LLMInterface
+  #llmInstance: LLMInterface
 
   constructor(
     ingestionInstance: DocumentIngestionInterface,
     retrievalInstance: DocumentRetrievalInterface,
-    generationInstance: GenerationInterface,
-    // llmInstance: LLMInterface
+    llmInstance: LLMInterface,
   ) {
     this.#ingestionInstance = ingestionInstance
     this.#retrievalInstance = retrievalInstance
-    this.#generationInstance = generationInstance
-    // this.#LLMInstance = llmInstance
+    this.#llmInstance = llmInstance
   }
 
+  // Entry point, called from index.ts, to run ingestion flow
   async runIngestionPipeline() {
     await this.#ingestDocuments()
-  }
-
-  // async runRetrievalPipeline(query: string) {
-
-  // }
-
-  // async runRetrievalPipelineSelfEval() {
-
-  // }
-
-  async runRetrievalPipeline(
-    query: string,
-    context = '',
-  ): Promise<StoredDocument[]> {
-    return this.#retrievalInstance.retrieveDocuments(query, context)
-  }
-
-  // async runGenerationPipeline(query: string): Promise<GeneratedIaC> {
-  //   const retrievedDocuments =
-  //     await this.#retrievalInstance.retrieveDocuments(query)
-
-  //   return this.#generationInstance.generate(query, retrievedDocuments)
-  // }
-  async runGenerationPipeline(
-    query: string,
-    retrievedDocuments: StoredDocument[],
-  ): Promise<GeneratedIaC> {
-    return this.#generationInstance.generate(query, retrievedDocuments)
-  }
-
-  async runRetrievalPipelineSelfEval(
-    generatedIaC: GeneratedIaC,
-    originalQuery: string,
-  ): Promise<StoredDocument[]> {
-    return this.#retrievalInstance.retrieveDocumentsSelfEval(
-      generatedIaC,
-      originalQuery,
-    )
   }
 
   async #ingestDocuments() {
     await this.#ingestionInstance.ingestDocuments()
   }
 
-  // async runRetrievalPipeline(query: string, context: string) {
-  //   await this.#retrieveDocuments(query, context)
-  // }
+  // Entry point, called from index.ts, to run RAG flow
+  async runRAGPipeline(query: string, context = ''): Promise<string> {
+    const retrievedDocuments = await this.#retrieveDocuments(query, context)
+    const summary = await this.#abstractiveSummarization(retrievedDocuments)
 
-  // async #retrieveDocuments(query: string, context: string) {
-  //   await this.#retrievalInstance.retrieveDocuments(query, context)
-  // }
+    console.log('ABSTRACTIVE SUMMARY FOR RAG FLOW:\n', summary)
 
-  // #generateIaC(query: string, retrievedChunks: string) {
-  //     this.#LLMInstance.generate(context, query);
-  // }
+    // Inject query + summary as context to the generation step, instead of full retrieved context, to see if it improves generation and self-evaluation results
+    return this.#generateIaC(summary, query)
+  }
 
-  // #retrieveSelfEvaluate(selfEvalQuery: string) {}
+  async #retrieveDocuments(query: string, context = '') {
+    return this.#retrievalInstance.retrieveDocuments(query, context)
+  }
 
-  // #generateSelfEvaluate(selfEvalPrompt: string, generatedIaC: string, originalQuery: string) {}
+  // Entry point, called from index.ts, to run retrieval for self-evaluation
+  async runRAGPipelineSelfEval(
+    query: string,
+    generatedIaC: string,
+  ): Promise<string> {
+    const retrievedDocuments = await this.#retrieveDocumentsSelfEval()
+    const summary = await this.#abstractiveSummarization(retrievedDocuments)
+
+    console.log('ABSTRACTIVE SUMMARY FOR RAG SELF-EVAL FLOW:\n', summary)
+
+    // Inject summary, query, generatedIaC, selfEvalPrompt as context to the generation step, instead of full retrieved context, to see if it improves generation and self-evaluation results
+    return this.#generateIaCSelfEval(
+      summary,
+      query,
+      generatedIaC,
+      SELF_EVAL_PROMPT,
+    )
+  }
+
+  async #retrieveDocumentsSelfEval(): Promise<StoredDocument[]> {
+    return this.#retrievalInstance.retrieveDocumentsSelfEval([
+      {
+        query: SELF_EVAL_SECURITY_QUERY,
+        categoryFilter: 'iac_security_article',
+      },
+      {
+        query: SELF_EVAL_CLEAN_CODE_QUERY,
+        categoryFilter: 'clean_code_article',
+      },
+    ])
+  }
+
+  async #abstractiveSummarization(
+    retrievedDocuments: StoredDocument[],
+  ): Promise<string> {
+    const context = buildContextFromDocuments(retrievedDocuments)
+    return this.#llmInstance.generateAbstractiveSummary(
+      context,
+      ABSTRACTIVE_SUMMARY_PROMPT,
+    )
+  }
+
+  async #generateIaC(summary: string, query: string): Promise<string> {
+    return this.#llmInstance.generateIaC(summary, query)
+  }
+
+  async #generateIaCSelfEval(
+    context: string,
+    query: string,
+    generatedIaC: string,
+    selfEvalPrompt: string,
+  ) {
+    return this.#llmInstance.generateIaCSelfEval(
+      context,
+      query,
+      generatedIaC,
+      selfEvalPrompt,
+    )
+  }
 }

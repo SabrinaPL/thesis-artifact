@@ -41,8 +41,20 @@ export function categoryMatchScore(query: string, category: string): number {
   if (q.includes('terraform') && c.includes('terraform')) return 1
   if (q.includes('ansible') && c.includes('ansible')) return 1
   if (q.includes('openstack') && c.includes('openstack')) return 1
-  if (q.includes('security') && c.includes('security')) return 1
-  if (q.includes('clean code') && c.includes('clean_code')) return 1
+  if (
+    (q.includes('security') ||
+      q.includes('misconfigurations') ||
+      q.includes('vulnerabilities')) &&
+    c.includes('security')
+  )
+    return 1
+  if (
+    (q.includes('clean code') ||
+      q.includes('code quality') ||
+      q.includes('maintainable')) &&
+    c.includes('clean_code')
+  )
+    return 1
 
   return 0
 }

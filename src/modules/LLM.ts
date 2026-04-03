@@ -1,5 +1,3 @@
-// TODO: add logic herre to handle interactions with LLM to generate IaC code based on context and query received from RAGOrchestratr, and handle self-eval process
-
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models'
 
 export class LLM {
@@ -9,9 +7,9 @@ export class LLM {
     this.#model = model
   }
 
-  async generate(context: string, query: string): Promise<string> {
+  async generateIaC(context: string, query: string): Promise<string> {
     const fullPrompt = `
-      Retrieved context:
+      Retrieved context summary:
       ${context}
 
       IaC task:
@@ -25,14 +23,14 @@ export class LLM {
       : JSON.stringify(response.content)
   }
 
-  async generateSelfEval(
+  async generateIaCSelfEval(
     context: string,
     query: string,
     generatedIaC: string,
     selfEvalPrompt: string,
   ): Promise<string> {
     const fullPrompt = `
-      Retrieved context:
+      Retrieved context summary:
       ${context}
 
       IaC task:
@@ -41,7 +39,7 @@ export class LLM {
       Generated IaC code to be evaluated:
       ${generatedIaC}
 
-      Internal prompt:
+      Self-evaluation prompt including evaluation criteria and guidelines:
       ${selfEvalPrompt}
       `
 
@@ -52,9 +50,22 @@ export class LLM {
       : JSON.stringify(response.content)
   }
 
-  // return await this.#model.invoke()
+  async generateAbstractiveSummary(
+    context: string,
+    abstractiveSummaryPrompt: string,
+  ): Promise<string> {
+    const fullPrompt = `
+      Retrieved context:
+      ${context}
 
-  // async #generateIaC(context: any, query: string): Promise<any> {
+      Summarization prompt including summarization guidelines:
+      ${abstractiveSummaryPrompt}
+    `
 
-  // }
+    const response = await this.#model.invoke(fullPrompt)
+
+    return typeof response.content === 'string'
+      ? response.content
+      : JSON.stringify(response.content)
+  }
 }

@@ -1,32 +1,7 @@
-// // TODO: add logic here to handle retrieval of documents from the vector DB, via the VectorDBStore, based on the query and context from RAGOrchestrator - then return the retrieved documents
-
-// import type { VectorDBStoreInterface } from '../types/VectorDBStoreInterface.js'
-// import type { GeneratedIaC } from '../types/GeneratedIaC.js'
-
-// export class DocumentRetrieval {
-//   #vectorDBStore: VectorDBStoreInterface
-
-//   constructor(vectorDBStore: VectorDBStoreInterface) {
-//     this.#vectorDBStore = vectorDBStore
-//   }
-
-//   async retrieveDocuments(query: string, context: string) {}
-
-//   async retrieveDocumentsSelfEval(
-//     generatedIaC: GeneratedIaC,
-//     // generatedIaC: string,
-//     originalQuery: string,
-//   ) {}
-// }
 import type { VectorDBStoreInterface } from '../types/VectorDBStoreInterface.js'
-import type { GeneratedIaC } from '../types/GeneratedIaC.js'
 import type { StoredDocument } from '../types/StoredDocument.js'
-import {
-  extractQueryTerms,
-  keywordOverlapScore,
-  categoryMatchScore,
-} from '../utils/retrievalScoring.js'
-import { cosineSimilarity } from '../utils/cosineSimilarityCalculator.js'
+import { extractQueryTerms } from '../utils/retrievalScoring.js'
+import { rankDocuments } from '../utils/documentRankingCalculator.js'
 
 export class DocumentRetrieval {
   #vectorDBStore: VectorDBStoreInterface
@@ -45,90 +20,71 @@ export class DocumentRetrieval {
     context = '',
   ): Promise<StoredDocument[]> {
     const retrievalInput = `${query}\n${context}`.trim()
-    return this.#rankDocuments(retrievalInput, 5, 2)
-    // const queryEmbedding = await this.#embedder(retrievalInput)
 
-    // const relevantDocuments =
-    //   await this.#vectorDBStore.searchSimilarDocuments(queryEmbedding, 5)
-
-    // return relevantDocuments
+    return this.#rankDocuments(retrievalInput, 8, 3)
   }
 
   async retrieveDocumentsSelfEval(
-    generatedIaC: GeneratedIaC,
-    originalQuery: string,
+    queries: Array<{ query: string; categoryFilter?: string }>,
   ): Promise<StoredDocument[]> {
-    const retrievalInput = `${originalQuery}\n${generatedIaC.content}`.trim()
-    return this.#rankDocuments(retrievalInput, 5, 2)
-    // const queryEmbedding = await this.#embedder(retrievalInput)
+    const documents = await this.#vectorDBStore.getAllDocuments()
+    const results = await Promise.all(
+      queries.map(({ query, categoryFilter }) =>
+        this.#rankDocumentsFromCandidates(
+          query.trim(),
+          documents,
+          5,
+          2,
+          categoryFilter,
+        ),
+      ),
+    )
+    const seen = new Set<string>()
 
-    // const relevantDocuments =
-    //   await this.#vectorDBStore.searchSimilarDocuments(queryEmbedding, 5)
-
-    // return relevantDocuments
+    return results.flat().filter((doc) => {
+      const key = `${doc.documentHash}:${doc.chunkIndex}`
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
   }
 
   async #rankDocuments(
     retrievalInput: string,
     limit: number,
     maxPerSource: number,
+    categoryFilter?: string,
   ): Promise<StoredDocument[]> {
-    const queryEmbedding = await this.#embedder(retrievalInput)
     // Current prototype implementation ranks all stored documents in application code.
     // For larger datasets, retrieval should first use vector search in the DB to fetch
     // a smaller candidate set, then apply keyword/category reranking on that subset.
     const documents = await this.#vectorDBStore.getAllDocuments()
+    return this.#rankDocumentsFromCandidates(
+      retrievalInput,
+      documents,
+      limit,
+      maxPerSource,
+      categoryFilter,
+    )
+  }
+
+  async #rankDocumentsFromCandidates(
+    retrievalInput: string,
+    documents: StoredDocument[],
+    limit: number,
+    maxPerSource: number,
+    categoryFilter?: string,
+  ): Promise<StoredDocument[]> {
+    const queryEmbedding = await this.#embedder(retrievalInput)
     const queryTerms = extractQueryTerms(retrievalInput)
-
-    const rankedDocuments = documents
-      .map((doc) => {
-        const semanticScore = cosineSimilarity(queryEmbedding, doc.embedding)
-        const keywordScore = keywordOverlapScore(queryTerms, doc.keywords ?? [])
-        const categoryScore = categoryMatchScore(
-          retrievalInput,
-          doc.category ?? '',
-        )
-
-        const finalScore =
-          semanticScore * 0.7 + keywordScore * 0.2 + categoryScore * 0.1
-
-        return {
-          ...doc,
-          score: finalScore,
-        }
-      })
-      .sort((a, b) => b.score - a.score)
-
-    const results: StoredDocument[] = []
-    const sourceCounts = new Map<string, number>()
-
-    for (const doc of rankedDocuments) {
-      const count = sourceCounts.get(doc.source) ?? 0
-
-      if (count >= maxPerSource) {
-        continue
-      }
-
-      results.push({
-        text: doc.text,
-        embedding: doc.embedding,
-        source: doc.source,
-        documentHash: doc.documentHash,
-        chunkIndex: doc.chunkIndex,
-        title: doc.title ?? '',
-        category: doc.category ?? '',
-        description: doc.description ?? '',
-        keywords: doc.keywords ?? [],
-        metadata: doc.metadata as Record<string, unknown>,
-      })
-
-      sourceCounts.set(doc.source, count + 1)
-
-      if (results.length >= limit) {
-        break
-      }
-    }
-
-    return results
+    return rankDocuments(
+      documents,
+      queryEmbedding,
+      queryTerms,
+      retrievalInput,
+      limit,
+      maxPerSource,
+      categoryFilter,
+    )
   }
 }

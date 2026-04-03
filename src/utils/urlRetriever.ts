@@ -9,7 +9,12 @@ export function retrieveDocuments(): DocumentEntry[] {
     throw new Error('DOCUMENTS environment variable is not set.')
   }
 
-  const documents: unknown = JSON.parse(raw)
+  let documents: unknown
+  try {
+    documents = JSON.parse(raw)
+  } catch {
+    throw new Error('DOCUMENTS environment variable contains invalid JSON.')
+  }
 
   if (!Array.isArray(documents)) {
     throw new Error(
