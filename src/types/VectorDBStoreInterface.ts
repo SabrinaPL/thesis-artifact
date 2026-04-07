@@ -2,7 +2,6 @@ import type { StoredDocument } from './StoredDocument.js'
 import type { IngestedSourceDocument } from './IngestedSourceDocument.js'
 
 export interface VectorDBStoreInterface {
-  // insertToDB(rawDocument: string, metaData: object): Promise<void>
   insertToDB(
     text: string,
     embedding: number[], // Assuming the embedding is an array of numbers, adjust as needed based on the actual embedding format
