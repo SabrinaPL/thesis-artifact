@@ -5,7 +5,7 @@ import { DocumentRetrieval } from './modules/DocumentRetrieval.js'
 // import { saveExperimentResults } from './utils/experimentWriter.js'
 import { LLM } from './modules/LLM.js'
 import { openAIConfig } from './config/openAIConfig.js'
-// import { anthropicConfig } from './config/anthropicConfig.js'
+import { anthropicConfig } from './config/anthropicConfig.js'
 import { openAIEmbedderConfig } from './config/openAIEmbedderConfig.js'
 import { connectDB } from './config/db.js'
 import { VectorDocumentModel } from './models/VectorDocumentModel.js'
@@ -29,9 +29,23 @@ import {
 //   { label: 'fourth-prompt', prompt: PROMPT_FOURTH_EXPERIMENT },
 // ]
 
-const openAIModel = openAIConfig()
+// Change model here by switching the modelName variable between 'anthropic' and 'openai'
+const modelName = 'anthropic'
+let llm
+
+if (modelName === 'anthropic') {
+  const anthropicModel = anthropicConfig()
+  llm = new LLM(anthropicModel, modelName)
+
+  console.log('Using Anthropic model for generation and self-evaluation')
+} else {
+  const openAIModel = openAIConfig()
+  llm = new LLM(openAIModel, modelName)
+
+  console.log('Using OpenAI model for generation and self-evaluation')
+}
+
 const openAIEmbedder = openAIEmbedderConfig()
-// const anthropicModel = anthropicConfig()
 
 const vectorDBStore = new VectorDBStore(
   VectorDocumentModel,
@@ -39,8 +53,6 @@ const vectorDBStore = new VectorDBStore(
 )
 const ingestion = new DocumentIngestion(vectorDBStore, openAIEmbedder)
 const retrieval = new DocumentRetrieval(vectorDBStore, openAIEmbedder)
-const llm = new LLM(openAIModel)
-// const llm = new LLM(anthropicModel) // Test using the Anthropic model for abstractive summary and generation
 const orchestrator = new RAGOrchestrator(ingestion, retrieval, llm)
 
 try {
@@ -48,9 +60,7 @@ try {
   await connectDB()
 
   // Preprocessing step: ingestion of documents, parsing and storing in the vector DB
-  // await orchestrator.runIngestionPipeline()
-  // const allDocs = await vectorDBStore.getAllDocuments()
-  // console.log('ALL DOCUMENTS:', allDocs.slice(0, 5)) // Log the first 5 documents to verify the ingestion process;
+  await orchestrator.runIngestionPipeline()
 
   // Run the RAG pipeline with the first prompt
   const generatedIaC = await orchestrator.runRAGPipeline(
@@ -69,41 +79,3 @@ try {
   console.error('Pipeline failed:', error)
   process.exit(1)
 }
-
-// const retrievedDocuments = await orchestrator.runRAGPipeline(
-//   PROMPT_FIRST_EXPERIMENT,
-// )
-
-// console.log('RETRIEVED DOCUMENTS:', retrievedDocuments.slice(0, 3))
-
-// Test the generation pipeline with the retrieved context
-// console.log('\n--- TESTING GENERATION PIPELINE ---')
-// const { generatedIaC, context } = await orchestrator.runGenerationPipeline(
-//   PROMPT_FIRST_EXPERIMENT,
-//   retrievedDocuments,
-// )
-// console.log('CONTEXT:\n', context)
-// console.log('GENERATED IAC:\n', generatedIaC.content)
-// console.log('--- END OF GENERATION PIPELINE TEST ---\n')
-
-// console.log('SELF-EVAL RETRIEVED DOCUMENTS:', selfEvalRetrievedDocs.slice(0, 3))
-
-// await saveExperimentResults(
-//   // experiment.label, // for later experiments with multiple prompts/configurations, to differentiate results in the saved file
-//   // experiment.prompt,
-//   'first-prompt',
-//   PROMPT_FIRST_EXPERIMENT,
-//   generatedIaC.content,
-//   context,
-//   retrievedDocuments,
-// )
-
-// Run the experiments
-// orchestrator.runRAGPipeline(PROMPT_FIRST_EXPERIMENT);
-// orchestrator.runRAGPipeline(PROMPT_SECOND_EXPERIMENT);
-// orchestrator.runRAGPipeline(PROMPT_THIRD_EXPERIMENT);
-// orchestrator.runRAGPipeline(PROMPT_FOURTH_EXPERIMENT);
-// orchestrator.runRAGPipelineSelfEval(PROMPT_FIRST_EXPERIMENT);
-// orchestrator.runRAGPipelineSelfEval(PROMPT_SECOND_EXPERIMENT);
-// orchestrator.runRAGPipelineSelfEval(PROMPT_THIRD_EXPERIMENT);
-// orchestrator.runRAGPipelineSelfEval(PROMPT_FOURTH_EXPERIMENT);

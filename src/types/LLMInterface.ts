@@ -10,4 +10,5 @@ export interface LLMInterface {
     context: string,
     abstractiveSummaryPrompt: string,
   ): Promise<string>
+  getModelName(): string
 }

@@ -2,9 +2,11 @@ import type { BaseChatModel } from '@langchain/core/language_models/chat_models'
 
 export class LLM {
   #model: BaseChatModel // One model to be used for both generation and self-evaluation, to ensure consistency in the evaluation process
+  #modelName: string
 
-  constructor(model: BaseChatModel) {
+  constructor(model: BaseChatModel, modelName: string) {
     this.#model = model
+    this.#modelName = modelName
   }
 
   async generateIaC(context: string, query: string): Promise<string> {
@@ -67,5 +69,9 @@ export class LLM {
     return typeof response.content === 'string'
       ? response.content
       : JSON.stringify(response.content)
+  }
+
+  getModelName(): string {
+    return this.#modelName
   }
 }
