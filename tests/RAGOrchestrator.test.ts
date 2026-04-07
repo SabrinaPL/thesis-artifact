@@ -43,6 +43,7 @@ describe('RAGOrchestrator', () => {
       generateIaC: vi.fn(),
       generateIaCSelfEval: vi.fn(),
       generateAbstractiveSummary: vi.fn(),
+      getModelName: vi.fn().mockReturnValue('openai'),
     }
   })
 
@@ -76,6 +77,7 @@ describe('RAGOrchestrator', () => {
 
     const result = await orchestrator.runRAGPipeline(
       'Generate OpenStack Terraform',
+      'First prompt',
       'Use nginx',
     )
 
@@ -110,6 +112,7 @@ describe('RAGOrchestrator', () => {
 
     const result = await orchestrator.runRAGPipelineSelfEval(
       'Generate an OpenStack web server',
+      'Self-eval first prompt',
       mockGeneratedIaC,
     )
 
