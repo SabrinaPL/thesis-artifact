@@ -3,6 +3,11 @@ import type { DocumentEntry } from '../types/DocumentType.js'
 
 dotenv.config()
 
+/**
+ * Function to retrieve documents from the DOCUMENTS environment variable, which is expected to be a JSON string representing an array of document entries. Each entry should have a URL, category, and description.
+ * The function parses the JSON, validates the structure of each entry, and returns an array of DocumentEntry objects that can be used for ingestion and retrieval in the RAG pipeline.
+ * @returns An array of DocumentEntry objects.
+ */
 export function retrieveDocuments(): DocumentEntry[] {
   const raw = process.env.DOCUMENTS
   if (!raw) {

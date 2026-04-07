@@ -7,16 +7,32 @@ import { readFile } from 'node:fs/promises'
 
 let _browser: Browser | null = null
 
+/**
+ * Function to initialize the Playwright browser instance, if not already initialized.
+ * This allows for reuse of the browser across multiple document parsing operations, improving performance by avoiding the overhead of launching a new browser for each parse.
+ * @returns A promise that resolves when the browser is initialized.
+ */
 export async function initBrowser() {
   if (_browser) return
   _browser = await chromium.launch({ headless: true })
 }
 
+/**
+ * Function to close the Playwright browser instance if it is open.
+ * This should be called when the application is shutting down or when browser-based parsing is no longer needed, to free up system resources.
+ * @returns A promise that resolves when the browser is closed.
+ */
 export async function closeBrowser() {
   await _browser?.close()
   _browser = null
 }
 
+/**
+ * Function to parse a PDF document from a given URL using the pdf-parse library. It extracts the text content and metadata from the PDF, and returns it in a structured format.
+ * This is used to handle PDF documents during ingestion, allowing their content to be indexed and made searchable in the vector database.
+ * @param url - The URL of the PDF document to parse.
+ * @returns A promise that resolves to a ParsedDocument object containing the text, title, and metadata of the PDF.
+ */
 // export async function parsePDF(url: string): Promise<ParsedDocument> {
 //   console.log('Parsing PDF document from URL:', url)
 
@@ -90,6 +106,12 @@ export async function parsePDF(source: string): Promise<ParsedDocument> {
 // Minimum text length to consider a static parse successful
 const MIN_STATIC_TEXT_LENGTH = 200 // TODO: adjust this threshodl?
 
+/**
+ * Extracts the main content text and title from an HTML document using JSDOM and Readability. This helps to focus on the relevant content of the page and reduce noise from navigation, ads, and other non-essential elements, improving the quality of ingested data for retrieval.
+ * @param html - The raw HTML content of the page.
+ * @param url - The URL of the page, used by JSDOM to resolve relative links and by Readability for context.
+ * @returns An object containing the extracted text and title from the HTML document.
+ */
 function extractReadabilityContent(
   html: string,
   url: string,
@@ -108,6 +130,11 @@ function extractReadabilityContent(
   return { text, title }
 }
 
+/**
+ * Function to parse an HTML document from a given URL using a two-stage strategy: first attempting a static fetch and parse using JSDOM and Readability, and if that yields insufficient content (indicating a client-side rendered page), falling back to using Playwright to render the page in a headless browser and then extract the content. This approach optimizes for performance by avoiding browser rendering when possible, while still being able to handle modern web pages that rely on JavaScript for content generation.
+ * @param url - The URL of the HTML document to parse.
+ * @returns A promise that resolves to a ParsedDocument object containing the text, title, and metadata of the HTML document, or null if the static parse yields insufficient content.
+ */
 async function parseHTMLStatic(url: string): Promise<ParsedDocument | null> {
   const response = await fetch(url, {
     headers: {
@@ -149,6 +176,11 @@ async function parseHTMLStatic(url: string): Promise<ParsedDocument | null> {
   }
 }
 
+/**
+ * Parse an HTML document using Playwright to render the page in a headless browser, allowing for extraction of content from client-side rendered pages that rely on JavaScript. This is used as a fallback when static parsing yields insufficient content, ensuring that we can still ingest data from modern web pages effectively.
+ * @param url - The URL of the HTML document to parse.
+ * @returns A promise that resolves to a ParsedDocument object containing the text, title, and metadata of the HTML document.
+ */
 async function parseHTMLWithBrowser(url: string): Promise<ParsedDocument> {
   if (!_browser) {
     _browser = await chromium.launch({ headless: true })
@@ -174,10 +206,11 @@ async function parseHTMLWithBrowser(url: string): Promise<ParsedDocument> {
   }
 }
 
-// Parses an HTML page using a two-stage strategy:
-// 1. Static fetch + JSDOM + Readability.
-// 2. Playwright fallback - used only when the static parse yields too little text,
-//    which indicates a client-side rendered page whose content only exists after JS execution.
+/**
+ * Parses an HTML document from a given URL using a two-stage strategy: first attempting a static fetch and parse using JSDOM and Readability, and if that yields insufficient content (indicating a client-side rendered page), falling back to using Playwright to render the page in a headless browser and then extract the content. This approach optimizes for performance by avoiding browser rendering when possible, while still being able to handle modern web pages that rely on JavaScript for content generation.
+ * @param url - The URL of the HTML document to parse.
+ * @returns A promise that resolves to a ParsedDocument object containing the text, title, and metadata of the HTML document.
+ */
 export async function parseHTMLDocument(url: string): Promise<ParsedDocument> {
   console.log('Parsing HTML document from URL:', url)
 

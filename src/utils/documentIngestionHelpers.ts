@@ -1,3 +1,9 @@
+/**
+ * Determines whether a document should be skipped based on its title and text content.
+ * @param title - The title of the document.
+ * @param text - The text content of the document.
+ * @returns A boolean indicating whether the document should be skipped.
+ */
 export function shouldSkipDocument(title: string, text: string): boolean {
   const normalizedTitle = title.toLowerCase()
   const normalizedText = text.toLowerCase()
@@ -68,6 +74,11 @@ export function isHttpUrl(value: string): boolean {
   return value.startsWith('http://') || value.startsWith('https://')
 }
 
+/**
+ * Normalizes a URL by trimming whitespace, removing trailing slashes from the pathname, and converting the hostname to lowercase.
+ * @param url - The URL to normalize.
+ * @returns The normalized URL as a string.
+ */
 // export function normalizeUrl(url: string): string {
 //   const normalized = new URL(url.trim())
 
