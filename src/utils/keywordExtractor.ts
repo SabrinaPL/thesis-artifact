@@ -70,6 +70,11 @@ const STOP_WORDS = new Set([
   'getting',
 ])
 
+/**
+ * Normalizes a word by converting it to lowercase, removing non-alphanumeric characters (except for underscores and hyphens), and trimming whitespace. This helps to standardize keywords for better frequency analysis and filtering.
+ * @param word - The word to normalize.
+ * @returns The normalized word.
+ */
 function normalizeWord(word: string): string {
   return word
     .toLowerCase()
@@ -77,6 +82,11 @@ function normalizeWord(word: string): string {
     .trim()
 }
 
+/**
+ * Determines if a word is a useful keyword by checking its length, presence in the stop words list, and other criteria. This helps to filter out common words and irrelevant tokens that are unlikely to be meaningful keywords in the context of document ingestion and retrieval.
+ * @param word - The word to check.
+ * @returns True if the word is a useful keyword, false otherwise.
+ */
 function isUsefulKeyword(word: string): boolean {
   if (word.length < 3) {
     return false
@@ -99,6 +109,13 @@ function isUsefulKeyword(word: string): boolean {
   return true
 }
 
+/**
+ * Extracts keywords from a given text chunk, along with optional title, category, and description, by normalizing the text, filtering out stop words and irrelevant tokens, and returning the most frequent keywords up to a specified maximum number. 
+ * This is used to enhance the metadata of ingested documents for better searchability and relevance in retrieval.
+ * @param chunk - The text chunk to extract keywords from.
+ * @param options - Optional parameters including title, category, description, and maximum number of keywords.
+ * @returns An array of extracted keywords.
+ */
 export function extractKeywords(
   chunk: string,
   options?: {
