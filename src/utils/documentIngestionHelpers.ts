@@ -64,21 +64,59 @@ export function shouldSkipDocument(title: string, text: string): boolean {
   return false
 }
 
-export function normalizeUrl(url: string): string {
-  const normalized = new URL(url.trim())
+export function isHttpUrl(value: string): boolean {
+  return value.startsWith('http://') || value.startsWith('https://')
+}
 
-  if (normalized.pathname.length > 1 && normalized.pathname.endsWith('/')) {
+// export function normalizeUrl(url: string): string {
+//   const normalized = new URL(url.trim())
+
+//   if (normalized.pathname.length > 1 && normalized.pathname.endsWith('/')) {
+//     normalized.pathname = normalized.pathname.slice(0, -1)
+//   }
+
+//   normalized.hostname = normalized.hostname.toLowerCase()
+
+//   return normalized.toString()
+// }
+
+export function normalizeUrl(source: string): string {
+  const trimmed = source.trim()
+
+  if (!isHttpUrl(trimmed)) {
+    return trimmed
+  }
+
+  const normalized = new URL(trimmed)
+
+  if (
+    normalized.pathname.length > 1 &&
+    normalized.pathname.endsWith('/')
+  ) {
     normalized.pathname = normalized.pathname.slice(0, -1)
   }
 
   normalized.hostname = normalized.hostname.toLowerCase()
+  normalized.hash = ''
 
   return normalized.toString()
 }
 
-export function getSourceVariants(url: string): string[] {
-  const raw = url.trim()
-  const normalized = normalizeUrl(url)
+// export function getSourceVariants(url: string): string[] {
+//   const raw = url.trim()
+//   const normalized = normalizeUrl(url)
+
+//   return [...new Set([raw, normalized])]
+// }
+
+export function getSourceVariants(source: string): string[] {
+  const raw = source.trim()
+
+  if (!isHttpUrl(raw)) {
+    return [raw]
+  }
+
+  const normalized = normalizeUrl(raw)
 
   return [...new Set([raw, normalized])]
 }

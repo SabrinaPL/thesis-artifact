@@ -3,6 +3,7 @@ import { Readability } from '@mozilla/readability' // Chosen for its ability to 
 import { JSDOM } from 'jsdom'
 import type { ParsedDocument } from '../types/DocumentType.js'
 import { chromium, type Browser } from 'playwright'
+import { readFile } from 'node:fs/promises'
 
 let _browser: Browser | null = null
 
@@ -16,37 +17,75 @@ export async function closeBrowser() {
   _browser = null
 }
 
-export async function parsePDF(url: string): Promise<ParsedDocument> {
-  console.log('Parsing PDF document from URL:', url)
+// export async function parsePDF(url: string): Promise<ParsedDocument> {
+//   console.log('Parsing PDF document from URL:', url)
 
-  const parser = new PDFParse({ url })
+//   const parser = new PDFParse({ url })
 
-  try {
-    const metadata = await parser.getInfo()
-    const textResult = await parser.getText()
-    const title =
-      typeof metadata?.info?.Title === 'string' && metadata.info.Title.trim()
-        ? metadata.info.Title.trim()
-        : 'Untitled document'
+//   try {
+//     const metadata = await parser.getInfo()
+//     const textResult = await parser.getText()
+//     const title =
+//       typeof metadata?.info?.Title === 'string' && metadata.info.Title.trim()
+//         ? metadata.info.Title.trim()
+//         : 'Untitled document'
 
-    const parsedDocument = {
-      text: textResult.text,
-      title,
-      metadata: metadata as unknown as Record<string, unknown>,
+//     const parsedDocument = {
+//       text: textResult.text,
+//       title,
+//       metadata: metadata as unknown as Record<string, unknown>,
+//     }
+
+//     // console.log('Parsed PDF document text:', parsedDocument.text)
+
+//     return parsedDocument
+//   } catch (error) {
+//     console.error('Error parsing PDF document:', error)
+//     throw error
+//   } finally {
+//     // Clean up parser after parsing is done
+//     await parser.destroy().catch(() => {})
+//     // TODO: add error handling logic
+//   }
+// }
+export async function parsePDF(source: string): Promise<ParsedDocument> {
+  const isHttpSource =
+      source.startsWith('http://') || source.startsWith('https://')
+
+    console.log(
+      isHttpSource
+        ? `Parsing PDF document from URL: ${source}`
+        : `Parsing PDF document from file: ${source}`,
+    )
+
+    const parser = isHttpSource
+      ? new PDFParse({ url: source })
+      : new PDFParse({ data: await readFile(source) })
+
+    try {
+      const metadata = await parser.getInfo()
+      const textResult = await parser.getText()
+
+      const title =
+        typeof metadata?.info?.Title === 'string' && metadata.info.Title.trim()
+          ? metadata.info.Title.trim()
+          : 'Untitled document'
+
+      return {
+        text: textResult.text,
+        title,
+        metadata: {
+          ...(metadata as unknown as Record<string, unknown>),
+          source,
+        },
+      }
+    } catch (error) {
+      console.error('Error parsing PDF document:', error)
+      throw error
+    } finally {
+      await parser.destroy().catch(() => {})
     }
-
-    // console.log('Parsed PDF document text:', parsedDocument.text)
-
-    return parsedDocument
-  } catch (error) {
-    console.error('Error parsing PDF document:', error)
-    throw error
-  } finally {
-    // Clean up parser after parsing is done
-    await parser.destroy().catch(() => {})
-    // TODO: add error handling logic
   }
-}
 
 // Minimum text length to consider a static parse successful
 const MIN_STATIC_TEXT_LENGTH = 200 // TODO: adjust this threshodl?
