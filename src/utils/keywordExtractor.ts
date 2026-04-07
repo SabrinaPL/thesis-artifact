@@ -110,7 +110,7 @@ function isUsefulKeyword(word: string): boolean {
 }
 
 /**
- * Extracts keywords from a given text chunk, along with optional title, category, and description, by normalizing the text, filtering out stop words and irrelevant tokens, and returning the most frequent keywords up to a specified maximum number. 
+ * Extracts keywords from a given text chunk, along with optional title, category, and description, by normalizing the text, filtering out stop words and irrelevant tokens, and returning the most frequent keywords up to a specified maximum number.
  * This is used to enhance the metadata of ingested documents for better searchability and relevance in retrieval.
  * @param chunk - The text chunk to extract keywords from.
  * @param options - Optional parameters including title, category, description, and maximum number of keywords.

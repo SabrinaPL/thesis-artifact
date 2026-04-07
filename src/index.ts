@@ -38,7 +38,9 @@ if (modelName === 'anthropic') {
 
   console.log('Using OpenAI model for generation and self-evaluation')
 } else {
-  throw new Error(`Unsupported MODEL_NAME: "${modelName}". Use 'anthropic' or 'openai'.`)
+  throw new Error(
+    `Unsupported MODEL_NAME: "${modelName}". Use 'anthropic' or 'openai'.`,
+  )
 }
 
 const openAIEmbedder = openAIEmbedderConfig()
@@ -59,15 +61,23 @@ try {
   await orchestrator.runIngestionPipeline()
 
   // Run the RAG pipeline and RAG self-evaluation pipeline for the selected experiment prompt
-  const selectedExperiment = process.env.SELECTED_EXPERIMENT || 'FIRST_EXPERIMENT' // Default to FIRST_EXPERIMENT if SELECTED_EXPERIMENT is not set in .env
-  
-  const prompt = experiments.find(exp => exp.label === selectedExperiment)?.prompt
+  const selectedExperiment =
+    process.env.SELECTED_EXPERIMENT || 'FIRST_EXPERIMENT' // Default to FIRST_EXPERIMENT if SELECTED_EXPERIMENT is not set in .env
+
+  const prompt = experiments.find(
+    (exp) => exp.label === selectedExperiment,
+  )?.prompt
 
   if (!prompt) {
-    throw new Error(`Selected experiment "${selectedExperiment}" not found. Please check the SELECTED_EXPERIMENT variable in .env and ensure it matches one of the defined experiments.`)
+    throw new Error(
+      `Selected experiment "${selectedExperiment}" not found. Please check the SELECTED_EXPERIMENT variable in .env and ensure it matches one of the defined experiments.`,
+    )
   }
 
-  const generatedIaC = await orchestrator.runRAGPipeline(prompt, selectedExperiment)
+  const generatedIaC = await orchestrator.runRAGPipeline(
+    prompt,
+    selectedExperiment,
+  )
 
   console.log('GENERATED IAC:\n', generatedIaC)
 

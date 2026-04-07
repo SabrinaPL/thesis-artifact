@@ -7,7 +7,7 @@ import { chromium, type Browser } from 'playwright'
 let _browser: Browser | null = null
 
 /**
- * Function to initialize the Playwright browser instance, if not already initialized. 
+ * Function to initialize the Playwright browser instance, if not already initialized.
  * This allows for reuse of the browser across multiple document parsing operations, improving performance by avoiding the overhead of launching a new browser for each parse.
  * @returns A promise that resolves when the browser is initialized.
  */
@@ -17,7 +17,7 @@ export async function initBrowser() {
 }
 
 /**
- * Function to close the Playwright browser instance if it is open. 
+ * Function to close the Playwright browser instance if it is open.
  * This should be called when the application is shutting down or when browser-based parsing is no longer needed, to free up system resources.
  * @returns A promise that resolves when the browser is closed.
  */
@@ -27,7 +27,7 @@ export async function closeBrowser() {
 }
 
 /**
- * Function to parse a PDF document from a given URL using the pdf-parse library. It extracts the text content and metadata from the PDF, and returns it in a structured format. 
+ * Function to parse a PDF document from a given URL using the pdf-parse library. It extracts the text content and metadata from the PDF, and returns it in a structured format.
  * This is used to handle PDF documents during ingestion, allowing their content to be indexed and made searchable in the vector database.
  * @param url - The URL of the PDF document to parse.
  * @returns A promise that resolves to a ParsedDocument object containing the text, title, and metadata of the PDF.

@@ -4,9 +4,9 @@ import { extractQueryTerms } from '../utils/retrievalScoring.js'
 import { rankDocuments } from '../utils/documentRankingCalculator.js'
 
 /**
- * DocumentRetrieval class responsible for retrieving relevant documents from the vector database based on a query and optional context, using a provided embedding function to compute query embeddings and rank documents by relevance. 
+ * DocumentRetrieval class responsible for retrieving relevant documents from the vector database based on a query and optional context, using a provided embedding function to compute query embeddings and rank documents by relevance.
  * It includes methods for both standard retrieval and self-evaluation retrieval, which can apply category filters and limit the number of results per source.
- * 
+ *
  * @author Sabrina Prichard-Lybeck
  * @author Bea Sanssi
  * @version 1.0

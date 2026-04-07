@@ -14,10 +14,10 @@ import {
 
 /**
  * DocumentIngestion class is responsible for handling the ingestion of documents into the system. It retrieves the document URLs, parses and preprocesses the documents, and communicates with the VectorDBStore to store the vector embeddings of the documents.
- * 
+ *
  * @author Sabrina Prichard-Lybeck
  * @author Bea Sanssi
- * 
+ *
  * @version 1.0
  */
 export class DocumentIngestion {

@@ -1,12 +1,12 @@
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models'
 
 /**
- * LLM class that serves as an abstraction layer over different language models (e.g., OpenAI, Anthropic) for both generation and self-evaluation tasks, ensuring consistency in the evaluation process by using the same model for both tasks. 
+ * LLM class that serves as an abstraction layer over different language models (e.g., OpenAI, Anthropic) for both generation and self-evaluation tasks, ensuring consistency in the evaluation process by using the same model for both tasks.
  * It provides methods to generate IaC code based on retrieved context and a query, perform self-evaluation of the generated IaC code using a provided self-evaluation prompt, and generate abstractive summaries of the retrieved context based on a summarization prompt.
- * 
+ *
  * @author Sabrina Prichard-Lybeck
  * @author Bea Sanssi
- * 
+ *
  * @version 1.0
  */
 export class LLM {

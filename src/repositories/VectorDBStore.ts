@@ -5,9 +5,9 @@ import type { VectorDocumentModelType } from '../models/VectorDocumentModel.js'
 import type { IngestedSourceDocumentModelType } from '../models/IngestedSourceDocumentModel.js'
 
 /**
- * VectorDBStore is responsible for all interactions with the vector database, including inserting new documents with their embeddings, retrieving documents for a given source, and managing the ingested source documents. 
+ * VectorDBStore is responsible for all interactions with the vector database, including inserting new documents with their embeddings, retrieving documents for a given source, and managing the ingested source documents.
  * It abstracts away the underlying database operations and provides a clean interface for the rest of the application to interact with the vector store.
- * 
+ *
  */
 export class VectorDBStore implements VectorDBStoreInterface {
   readonly #vectorDocumentModel: VectorDocumentModelType

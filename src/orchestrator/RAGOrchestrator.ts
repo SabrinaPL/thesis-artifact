@@ -49,7 +49,11 @@ export class RAGOrchestrator {
   }
 
   // Entry point, called from index.ts, to run RAG flow
-  async runRAGPipeline(query: string, label: string, context = ''): Promise<string> {
+  async runRAGPipeline(
+    query: string,
+    label: string,
+    context = '',
+  ): Promise<string> {
     const retrievedDocuments = await this.#retrieveDocuments(query, context)
     const summary = await this.#abstractiveSummarization(retrievedDocuments)
 
