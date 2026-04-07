@@ -2,12 +2,33 @@ import { mkdir, writeFile, readdir } from 'node:fs/promises'
 import path from 'node:path'
 import type { StoredDocument } from '../types/StoredDocument.js'
 
-function getPromptFolderName(promptLabel: string): string {
-  return promptLabel.trim().toLowerCase().replace(/\s+/g, '-')
+function toSafeFolderName(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-_]/g, '-')
+    .replace(/-+/g, '-')
 }
 
-async function getNextExperimentName(promptLabel: string): Promise<string> {
-  const promptFolder = path.resolve('outputs', getPromptFolderName(promptLabel))
+function getPromptFolderName(promptLabel: string): string {
+  return toSafeFolderName(promptLabel)
+}
+
+function getModelFolderName(modelName: string): string {
+  return toSafeFolderName(modelName)
+}
+
+async function getNextExperimentName(
+  promptLabel: string,
+  modelName: string,
+): Promise<string> {
+  const promptFolder = path.resolve(
+    'outputs',
+    'eval',
+    getPromptFolderName(promptLabel),
+    getModelFolderName(modelName),
+  )
 
   await mkdir(promptFolder, { recursive: true })
 
@@ -41,12 +62,18 @@ export async function saveIaCResults(
   modelName: string,
 ): Promise<void> {
   const promptFolderName = getPromptFolderName(promptLabel)
-  const experimentName = await getNextExperimentName(promptLabel)
+  const modelFolderName = getModelFolderName(modelName)
+  const experimentName = await getNextExperimentName(promptLabel, modelName)
 
-  // TODO: refactor so that output folder structure uses model name as well, to make it easier to compare results across models
   console.log(modelName)
 
-  const folderPath = path.resolve('outputs', promptFolderName, experimentName)
+  const folderPath = path.resolve(
+    'outputs',
+    'eval',
+    promptFolderName,
+    modelFolderName,
+    experimentName,
+  )
 
   await mkdir(folderPath, { recursive: true })
 
@@ -56,6 +83,9 @@ export async function saveIaCResults(
 
 ## Prompt Label
 ${promptLabel}
+
+## Model
+${modelName}
 
 ## Query
 ${query}
@@ -77,6 +107,9 @@ ${generatedContent}
 ## Prompt Label
 ${promptLabel}
 
+## Model
+${modelName}
+
 ${context}
 `
 
@@ -92,5 +125,7 @@ ${context}
     'utf8',
   )
 
-  console.log(`Saved experiment: ${promptFolderName}/${experimentName}`)
+  console.log(
+    `Saved experiment: ${promptFolderName}/${modelFolderName}/${experimentName}`,
+  )
 }
