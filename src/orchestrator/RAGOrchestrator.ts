@@ -4,6 +4,7 @@ import type { LLMInterface } from '../types/LLMInterface.js'
 // import type { GeneratedIaC } from '../types/GeneratedIaC.js'
 import type { StoredDocument } from '../types/StoredDocument.js'
 import { buildContextFromDocuments } from '../utils/buildContext.js'
+import { saveIaCResults } from '../utils/iacWriter.js'
 import {
   SELF_EVAL_PROMPT,
   SELF_EVAL_SECURITY_QUERY,
@@ -56,7 +57,13 @@ export class RAGOrchestrator {
     console.log('ABSTRACTIVE SUMMARY FOR RAG FLOW:\n', summary)
 
     // Inject query + summary as context to the generation step, instead of full retrieved context, to see if it improves generation and self-evaluation results
-    return this.#generateIaC(summary, query)
+    const generatedIaC = await this.#generateIaC(summary, query)
+
+    const modelName = this.#llmInstance.getModelName()
+
+    await saveIaCResults('first-prompt', query, generatedIaC, summary, retrievedDocuments, modelName)
+
+    return generatedIaC
   }
 
   async #retrieveDocuments(query: string, context = '') {
@@ -74,12 +81,18 @@ export class RAGOrchestrator {
     console.log('ABSTRACTIVE SUMMARY FOR RAG SELF-EVAL FLOW:\n', summary)
 
     // Inject summary, query, generatedIaC, selfEvalPrompt as context to the generation step, instead of full retrieved context, to see if it improves generation and self-evaluation results
-    return this.#generateIaCSelfEval(
+    const selfEvalResult = await this.#generateIaCSelfEval(
       summary,
       query,
       generatedIaC,
       SELF_EVAL_PROMPT,
     )
+
+    const modelName = this.#llmInstance.getModelName()
+
+    await saveIaCResults('self-eval-prompt', query, selfEvalResult, summary, retrievedDocuments, modelName)
+
+    return selfEvalResult
   }
 
   async #retrieveDocumentsSelfEval(): Promise<StoredDocument[]> {

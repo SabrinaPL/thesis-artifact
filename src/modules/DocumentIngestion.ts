@@ -16,7 +16,6 @@ import {
  * DocumentIngestion class is responsible for handling the ingestion of documents into the system. It retrieves the document URLs, parses and preprocesses the documents, and communicates with the VectorDBStore to store the vector embeddings of the documents.
  */
 export class DocumentIngestion {
-  // TODO: re-enable when testing full ingestion pipeline (DB + embeddings)
   #vectorDBStore: VectorDBStoreInterface
   #embedder: (text: string) => Promise<number[]>
 
@@ -43,7 +42,6 @@ export class DocumentIngestion {
         }
       }
     } finally {
-      // TODO: do we want to close the browser after each document or keep it open for the entire ingestion process (if there are many documents, it might be more efficient to keep it open and reuse it across documents, but we also need to consider resource usage and potential memory leaks)?
       await closeBrowser()
     }
   }

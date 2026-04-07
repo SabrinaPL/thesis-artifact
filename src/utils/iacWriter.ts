@@ -32,15 +32,19 @@ function getTimestamp(): string {
   return new Date().toISOString().replace(/[:.]/g, '-')
 }
 
-export async function saveExperimentResults(
+export async function saveIaCResults(
   promptLabel: string,
   query: string,
   generatedContent: string,
   context: string,
   retrievedDocuments: StoredDocument[],
+  modelName: string,
 ): Promise<void> {
   const promptFolderName = getPromptFolderName(promptLabel)
   const experimentName = await getNextExperimentName(promptLabel)
+
+  // TODO: refactor so that output folder structure uses model name as well, to make it easier to compare results across models
+  console.log(modelName)
 
   const folderPath = path.resolve('outputs', promptFolderName, experimentName)
 
