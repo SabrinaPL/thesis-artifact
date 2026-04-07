@@ -60,7 +60,14 @@ export class RAGOrchestrator {
 
     const modelName = this.#llmInstance.getModelName()
 
-    await saveIaCResults('first-prompt', query, generatedIaC, summary, retrievedDocuments, modelName)
+    await saveIaCResults(
+      'first-prompt',
+      query,
+      generatedIaC,
+      summary,
+      retrievedDocuments,
+      modelName,
+    )
 
     return generatedIaC
   }
@@ -89,7 +96,14 @@ export class RAGOrchestrator {
 
     const modelName = this.#llmInstance.getModelName()
 
-    await saveIaCResults('self-eval-prompt', query, selfEvalResult, summary, retrievedDocuments, modelName)
+    await saveIaCResults(
+      'self-eval-prompt',
+      query,
+      selfEvalResult,
+      summary,
+      retrievedDocuments,
+      modelName,
+    )
 
     return selfEvalResult
   }
