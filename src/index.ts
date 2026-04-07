@@ -19,7 +19,12 @@ import {
 // Dependency injection and instantiation of components, to follow the principle of separation of concerns and inversion of control, allowing for better modularity and testability
 
 const modelName = process.env.MODEL_NAME || 'openai' // Default to openai if MODEL_NAME is not set in .env
-const experimentPrompts = [PROMPT_FIRST_EXPERIMENT, PROMPT_SECOND_EXPERIMENT, PROMPT_THIRD_EXPERIMENT, PROMPT_FOURTH_EXPERIMENT]
+const experiments = [
+  { label: 'FIRST_EXPERIMENT', prompt: PROMPT_FIRST_EXPERIMENT },
+  { label: 'SECOND_EXPERIMENT', prompt: PROMPT_SECOND_EXPERIMENT },
+  { label: 'THIRD_EXPERIMENT', prompt: PROMPT_THIRD_EXPERIMENT },
+  { label: 'FOURTH_EXPERIMENT', prompt: PROMPT_FOURTH_EXPERIMENT },
+]
 let llm
 
 if (modelName === 'anthropic') {
@@ -53,21 +58,26 @@ try {
   // Preprocessing step: ingestion of documents, parsing and storing in the vector DB
   await orchestrator.runIngestionPipeline()
 
-  // Run the RAG pipeline for each experiment prompt and log the generated IaC and self-evaluation results
-  for (const prompt of experimentPrompts) {
-    console.log(`\nRunning RAG pipeline for prompt: ${prompt}\n`)
+  // Run the RAG pipeline and RAG self-evaluation pipeline for the selected experiment prompt
+  const selectedExperiment = process.env.SELECTED_EXPERIMENT || 'FIRST_EXPERIMENT' // Default to FIRST_EXPERIMENT if SELECTED_EXPERIMENT is not set in .env
+  
+  const prompt = experiments.find(exp => exp.label === selectedExperiment)?.prompt
 
-    const generatedIaC = await orchestrator.runRAGPipeline(prompt)
-
-    console.log('GENERATED IAC:\n', generatedIaC)
-
-    const generatedIaCSelfEval = await orchestrator.runRAGPipelineSelfEval(
-      prompt,
-      generatedIaC,
-    )
-
-    console.log('GENERATED IAC SELF-EVAL:\n', generatedIaCSelfEval)
+  if (!prompt) {
+    throw new Error(`Selected experiment "${selectedExperiment}" not found. Please check the SELECTED_EXPERIMENT variable in .env and ensure it matches one of the defined experiments.`)
   }
+
+  const generatedIaC = await orchestrator.runRAGPipeline(prompt, selectedExperiment)
+
+  console.log('GENERATED IAC:\n', generatedIaC)
+
+  const generatedIaCSelfEval = await orchestrator.runRAGPipelineSelfEval(
+    prompt,
+    generatedIaC,
+    selectedExperiment,
+  )
+
+  console.log('GENERATED IAC SELF-EVAL:\n', generatedIaCSelfEval)
 } catch (error) {
   console.error('Pipeline failed:', error)
   process.exit(1)

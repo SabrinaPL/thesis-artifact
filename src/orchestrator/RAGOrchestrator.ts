@@ -49,7 +49,7 @@ export class RAGOrchestrator {
   }
 
   // Entry point, called from index.ts, to run RAG flow
-  async runRAGPipeline(query: string, context = ''): Promise<string> {
+  async runRAGPipeline(query: string, label: string, context = ''): Promise<string> {
     const retrievedDocuments = await this.#retrieveDocuments(query, context)
     const summary = await this.#abstractiveSummarization(retrievedDocuments)
 
@@ -61,7 +61,7 @@ export class RAGOrchestrator {
     const modelName = this.#llmInstance.getModelName()
 
     await saveIaCResults(
-      'first-prompt',
+      label,
       query,
       generatedIaC,
       summary,
@@ -80,6 +80,7 @@ export class RAGOrchestrator {
   async runRAGPipelineSelfEval(
     query: string,
     generatedIaC: string,
+    label: string,
   ): Promise<string> {
     const retrievedDocuments = await this.#retrieveDocumentsSelfEval()
     const summary = await this.#abstractiveSummarization(retrievedDocuments)
@@ -97,7 +98,7 @@ export class RAGOrchestrator {
     const modelName = this.#llmInstance.getModelName()
 
     await saveIaCResults(
-      'self-eval-prompt',
+      `${label}-self-eval`,
       query,
       selfEvalResult,
       summary,
