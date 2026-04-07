@@ -6,7 +6,7 @@ export function openAIConfig() {
   }
 
   return new ChatOpenAI({
-    modelName: process.env.OPENAI_MODEL || 'gpt-5.2',
+    modelName: process.env.OPENAI_MODEL || 'gpt-5.4', // Chosen since it's the best intelligence at scale for agentic, coding and professional workflows, according to OpenAI API Docs (https://developers.openai.com/api/docs/models)
     openAIApiKey: process.env.OPENAI_API_KEY,
     timeout: 300000,
     maxRetries: 3,

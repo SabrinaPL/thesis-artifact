@@ -11,7 +11,6 @@ import {
   SELF_EVAL_CLEAN_CODE_QUERY,
 } from '../prompts/selfEvalPrompts.js'
 import { ABSTRACTIVE_SUMMARY_PROMPT } from '../prompts/summaryPrompt.js'
-// import { retrieveDocuments } from './../utils/urlRetriever.js'
 
 /**
  * RAGOrchestrator class is responsible for orchestrating the Retrieval-Augmented Generation (RAG) process.
