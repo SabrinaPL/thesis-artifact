@@ -1,7 +1,6 @@
 import type { DocumentIngestionInterface } from '../types/DocumentIngestionInterface.js'
 import type { DocumentRetrievalInterface } from '../types/DocumentRetrievalInterface.js'
 import type { LLMInterface } from '../types/LLMInterface.js'
-// import type { GeneratedIaC } from '../types/GeneratedIaC.js'
 import type { StoredDocument } from '../types/StoredDocument.js'
 import { buildContextFromDocuments } from '../utils/buildContext.js'
 import { saveIaCResults } from '../utils/iacWriter.js'
@@ -23,8 +22,6 @@ import { ABSTRACTIVE_SUMMARY_PROMPT } from '../prompts/summaryPrompt.js'
  * @version 1.0
  */
 export class RAGOrchestrator {
-  // #generatedIaC: string | null;
-  // #generatedIaCSelfEvaluated: string | null;
   #ingestionInstance: DocumentIngestionInterface
   #retrievalInstance: DocumentRetrievalInterface
   #llmInstance: LLMInterface
