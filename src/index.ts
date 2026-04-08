@@ -56,7 +56,17 @@ try {
   await connectDB()
 
   // Preprocessing step: ingestion of documents, parsing and storing in the vector DB
-  await orchestrator.runIngestionPipeline()
+  if (process.env.INGEST_DOCUMENTS === 'true') {
+    console.log('Starting document ingestion pipeline...')
+
+    await orchestrator.runIngestionPipeline()
+
+    console.log('Document ingestion pipeline completed successfully.')
+  } else {
+    console.log(
+      'Skipping document ingestion preprocessing step. Set INGEST_DOCUMENTS=true in .env to enable the ingestion pipeline.',
+    )
+  }
 
   // Run the RAG pipeline and RAG self-evaluation pipeline for the selected experiment prompt
   const selectedExperiment =

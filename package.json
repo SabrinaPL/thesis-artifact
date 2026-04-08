@@ -14,7 +14,8 @@
     "test": "vitest",
     "test:run": "vitest run",
     "coverage": "vitest run --coverage",
-    "run:experiments": "node dist/index.js"
+    "run:experiments": "node dist/index.js",
+    "knip": "knip"
   },
   "keywords": [],
   "author": "",
@@ -23,10 +24,11 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/jsdom": "^28.0.1",
-    "@types/node": "^25.4.0",
+    "@types/node": "^25.5.2",
     "@types/sbd": "^1.0.5",
     "@vitest/coverage-v8": "^4.0.18",
     "eslint": "^10.1.0",
+    "knip": "^6.3.1",
     "ts-node": "^10.9.2",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",

@@ -6,6 +6,7 @@ import { buildContextFromDocuments } from '../utils/buildContext.js'
 import { saveIaCResults } from '../utils/iacWriter.js'
 import {
   SELF_EVAL_PROMPT,
+  SELF_EVAL_QUERY,
   SELF_EVAL_SECURITY_QUERY,
   SELF_EVAL_CLEAN_CODE_QUERY,
 } from '../prompts/selfEvalPrompts.js'
@@ -113,12 +114,16 @@ export class RAGOrchestrator {
   async #retrieveDocumentsSelfEval(): Promise<StoredDocument[]> {
     return this.#retrievalInstance.retrieveDocumentsSelfEval([
       {
+        query: SELF_EVAL_QUERY,
+        categoryFilter: 'iac_best_practices',
+      },
+      {
         query: SELF_EVAL_SECURITY_QUERY,
-        categoryFilter: 'iac_security_article',
+        categoryFilter: 'iac_security',
       },
       {
         query: SELF_EVAL_CLEAN_CODE_QUERY,
-        categoryFilter: 'clean_code_article',
+        categoryFilter: 'clean_code',
       },
     ])
   }
