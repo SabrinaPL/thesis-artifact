@@ -70,18 +70,24 @@ const DEFAULT_CATEGORY_KEYWORDS = [
 /**
  * Function that loads category keywords from the environment variable CATEGORY_KEYWORDS.
  * If the environment variable is not set, it returns the default category keywords.
+ * The result is cached at module scope after the first call to avoid repeated parsing.
  *
  * @returns An array of category keywords.
  */
+let cachedCategoryKeywords: string[] | null = null
+
 function loadCategoryKeywords(): string[] {
+  if (cachedCategoryKeywords) return cachedCategoryKeywords
+
   const raw = process.env.CATEGORY_KEYWORDS
-  if (raw) {
-    return raw
-      .split(',')
-      .map((k) => k.trim().toLowerCase())
-      .filter((k) => k.length > 0)
-  }
-  return DEFAULT_CATEGORY_KEYWORDS
+  cachedCategoryKeywords = raw
+    ? raw
+        .split(',')
+        .map((k) => k.trim().toLowerCase())
+        .filter((k) => k.length > 0)
+    : DEFAULT_CATEGORY_KEYWORDS
+
+  return cachedCategoryKeywords
 }
 
 /**
@@ -93,8 +99,9 @@ function loadCategoryKeywords(): string[] {
  * @returns A number representing the category match score, which can be used to rank retrieved documents.
  */
 export function categoryMatchScore(query: string, category: string): number {
-  const q = query.toLowerCase()
-  const c = category.toLowerCase()
+  const normalize = (s: string) => s.toLowerCase().replace(/[_-]/g, ' ')
+  const q = normalize(query)
+  const c = normalize(category)
 
   if (!c) return 0
 
