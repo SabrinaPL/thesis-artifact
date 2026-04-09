@@ -21,8 +21,13 @@ export function rankDocuments(
   maxPerSource: number,
   categoryFilter?: string,
 ): StoredDocument[] {
+  const normalizeCategory = (s: string) => s.toLowerCase().replace(/[_-]/g, ' ')
   const pool = categoryFilter
-    ? documents.filter((doc) => doc.category === categoryFilter)
+    ? documents.filter((doc) =>
+        normalizeCategory(doc.category ?? '').includes(
+          normalizeCategory(categoryFilter),
+        ),
+      )
     : documents
   const ranked = pool
     .map((doc) => {
