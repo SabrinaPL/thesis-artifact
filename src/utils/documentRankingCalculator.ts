@@ -22,7 +22,7 @@ export function rankDocuments(
   categoryFilter?: string,
 ): StoredDocument[] {
   const pool = categoryFilter
-    ? documents.filter((doc) => doc.category === categoryFilter)
+    ? documents.filter((doc) => doc.category?.includes(categoryFilter))
     : documents
   const ranked = pool
     .map((doc) => {

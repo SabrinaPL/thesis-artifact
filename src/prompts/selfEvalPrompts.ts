@@ -2,13 +2,26 @@ export const SELF_EVAL_QUERY = `
     What are the security best practices, common misconfigurations, code quality guidelines, and best practices for writing clear and maintainable Infrastructure as Code using Terraform, Ansible, and OpenStack for junior developers and beginners new to DevOps and IaC?
 `
 
+export const SELF_EVAL_QUERY_CATEGORY_FILTER = 'iac best practices'
+
 export const SELF_EVAL_SECURITY_QUERY = `
     What are the security vulnerabilities, misconfigurations, hardening guidelines, and security best practices for Infrastructure as Code using Terraform, Ansible, and OpenStack?
 `
 
+export const SELF_EVAL_SECURITY_QUERY_CATEGORY_FILTER = 'iac security'
+
 export const SELF_EVAL_CLEAN_CODE_QUERY = `
     What are the code quality guidelines, clean code principles, maintainability best practices, and recommended patterns for writing readable, maintainable, testable and well-structured Infrastructure as Code using Terraform, Ansible, and OpenStack?
 `
+
+export const SELF_EVAL_CLEAN_CODE_QUERY_CATEGORY_FILTER = 'clean code'
+
+export const SELF_EVAL_BEGINNERS_QUERY = `
+    What are the fundamental concepts, basic terminology, and beginner-friendly introductions to the basics in Infrastructure as Code, Terraform, Ansible, and OpenStack that junior developers and beginners new to DevOps need to understand?
+`
+
+export const SELF_EVAL_BEGINNERS_QUERY_CATEGORY_FILTER =
+  'iac basics for beginners'
 
 export const SELF_EVAL_PROMPT = `
     You are a senior DevOps Engineer and expert in Infrastructure as Code (IaC) who teaches IaC to junior developers new to this field. 

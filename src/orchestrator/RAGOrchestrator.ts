@@ -7,8 +7,13 @@ import { saveIaCResults } from '../utils/iacWriter.js'
 import {
   SELF_EVAL_PROMPT,
   SELF_EVAL_QUERY,
+  SELF_EVAL_QUERY_CATEGORY_FILTER,
   SELF_EVAL_SECURITY_QUERY,
+  SELF_EVAL_SECURITY_QUERY_CATEGORY_FILTER,
   SELF_EVAL_CLEAN_CODE_QUERY,
+  SELF_EVAL_CLEAN_CODE_QUERY_CATEGORY_FILTER,
+  SELF_EVAL_BEGINNERS_QUERY,
+  SELF_EVAL_BEGINNERS_QUERY_CATEGORY_FILTER,
 } from '../prompts/selfEvalPrompts.js'
 import { ABSTRACTIVE_SUMMARY_PROMPT } from '../prompts/summaryPrompt.js'
 
@@ -115,15 +120,19 @@ export class RAGOrchestrator {
     return this.#retrievalInstance.retrieveDocumentsSelfEval([
       {
         query: SELF_EVAL_QUERY,
-        categoryFilter: 'iac_best_practices',
+        categoryFilter: SELF_EVAL_QUERY_CATEGORY_FILTER,
       },
       {
         query: SELF_EVAL_SECURITY_QUERY,
-        categoryFilter: 'iac_security',
+        categoryFilter: SELF_EVAL_SECURITY_QUERY_CATEGORY_FILTER,
       },
       {
         query: SELF_EVAL_CLEAN_CODE_QUERY,
-        categoryFilter: 'clean_code',
+        categoryFilter: SELF_EVAL_CLEAN_CODE_QUERY_CATEGORY_FILTER,
+      },
+      {
+        query: SELF_EVAL_BEGINNERS_QUERY,
+        categoryFilter: SELF_EVAL_BEGINNERS_QUERY_CATEGORY_FILTER,
       },
     ])
   }
