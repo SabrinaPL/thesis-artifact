@@ -35,7 +35,17 @@ export class DocumentIngestion {
 
   async ingestDocuments() {
     const documents = retrieveDocuments()
-    const pdfDocuments = retrievePdfDocuments()
+    let pdfDocuments: DocumentEntry[] = []
+
+    try {
+      pdfDocuments = retrievePdfDocuments()
+    } catch (error) {
+      console.warn(
+        'PDF_DOCUMENTS is not set or invalid, skipping PDF ingestion',
+        error,
+      )
+    }
+
     const allDocuments = [...documents, ...pdfDocuments]
 
     try {
