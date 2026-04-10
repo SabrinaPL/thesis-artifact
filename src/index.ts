@@ -16,8 +16,6 @@ import {
   PROMPT_FOURTH_EXPERIMENT,
 } from './prompts/experimentationPrompts.js'
 
-// Dependency injection and instantiation of components, to follow the principle of separation of concerns and inversion of control, allowing for better modularity and testability
-
 const modelName = process.env.MODEL_NAME || 'openai' // Default to openai if MODEL_NAME is not set in .env
 const experiments = [
   { label: 'FIRST_EXPERIMENT', prompt: PROMPT_FIRST_EXPERIMENT },
@@ -43,8 +41,8 @@ if (modelName === 'anthropic') {
   )
 }
 
+// Dependency injection and instantiation of components, to follow the principle of separation of concerns and inversion of control, allowing for better modularity and testability
 const openAIEmbedder = openAIEmbedderConfig()
-
 const vectorDBStore = new VectorDBStore(
   VectorDocumentModel,
   IngestedSourceDocumentModel,
@@ -58,7 +56,17 @@ try {
   await connectDB()
 
   // Preprocessing step: ingestion of documents, parsing and storing in the vector DB
-  await orchestrator.runIngestionPipeline()
+  if (process.env.INGEST_DOCUMENTS === 'true') {
+    console.log('Starting document ingestion pipeline...')
+
+    await orchestrator.runIngestionPipeline()
+
+    console.log('Document ingestion pipeline completed successfully.')
+  } else {
+    console.log(
+      'Skipping document ingestion preprocessing step. Set INGEST_DOCUMENTS=true in .env to enable the ingestion pipeline.',
+    )
+  }
 
   // Run the RAG pipeline and RAG self-evaluation pipeline for the selected experiment prompt
   const selectedExperiment =

@@ -101,8 +101,11 @@ export class DocumentIngestion {
     const existingChunks =
       await this.#vectorDBStore.getDocumentsBySource(source)
 
-    // Step 6: Skip if unchanged
-    if (existingSourceDocument?.documentHash === documentHash) {
+    // Step 6: Skip if unchanged (same hash AND same category)
+    if (
+      existingSourceDocument?.documentHash === documentHash &&
+      existingSourceDocument?.category === document.category
+    ) {
       console.log('--- HASH CHECK ---')
       console.log('SOURCE:', source)
       console.log('EXISTING SOURCE DOC:', existingSourceDocument)

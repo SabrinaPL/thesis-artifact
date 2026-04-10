@@ -48,37 +48,71 @@ export function keywordOverlapScore(
   return matches / queryTerms.length
 }
 
+const DEFAULT_CATEGORY_KEYWORDS = [
+  'terraform',
+  'ansible',
+  'openstack',
+  'security',
+  'clean code',
+  'ci cd',
+  'gitlab',
+  'github actions',
+  'nginx',
+  'nfs',
+  'yaml',
+  'load balancing',
+  'load balancer',
+  'basics',
+  'beginners',
+  'iac',
+]
+
 /**
- * Function to calculate a combined relevance score for a document based on both keyword overlap and category match, by weighting the keyword overlap score and category match score and summing them. This allows for a more nuanced relevance scoring that takes into account both the presence of relevant keywords and the alignment of the document's category with the query's intent.
+ * Function that loads category keywords from the environment variable CATEGORY_KEYWORDS.
+ * If the environment variable is not set, it returns the default category keywords.
+ * The result is cached at module scope after the first call to avoid repeated parsing.
+ *
+ * @returns An array of category keywords.
+ */
+let cachedCategoryKeywords: string[] | null = null
+
+function loadCategoryKeywords(): string[] {
+  if (cachedCategoryKeywords) return cachedCategoryKeywords
+
+  const raw = process.env.CATEGORY_KEYWORDS
+  cachedCategoryKeywords = raw
+    ? raw
+        .split(',')
+        .map((k) => k.trim().toLowerCase())
+        .filter((k) => k.length > 0)
+    : DEFAULT_CATEGORY_KEYWORDS
+
+  return cachedCategoryKeywords
+}
+
+/**
+ * Function to calculate a category match score between the query and the document category, by counting the number of matching keywords from a predefined list of category keywords.
+ * This provides a simple relevance score based on how many of the category keywords are present in both the query and the document category.
+ *
  * @param query - The original query string.
- * @param queryTerms - An array of normalized query terms extracted from the query.
- * @param keywords - An array of normalized document keywords.
  * @param category - The category of the document.
- * @returns A number representing the combined relevance score, which can be used to rank retrieved documents.
+ * @returns A number representing the category match score, which can be used to rank retrieved documents.
  */
 export function categoryMatchScore(query: string, category: string): number {
-  const q = query.toLowerCase()
-  const c = category.toLowerCase()
+  const normalize = (s: string) => s.toLowerCase().replace(/[_-]/g, ' ')
+  const q = normalize(query)
+  const c = normalize(category)
 
   if (!c) return 0
 
-  if (q.includes('terraform') && c.includes('terraform')) return 1
-  if (q.includes('ansible') && c.includes('ansible')) return 1
-  if (q.includes('openstack') && c.includes('openstack')) return 1
-  if (
-    (q.includes('security') ||
-      q.includes('misconfigurations') ||
-      q.includes('vulnerabilities')) &&
-    c.includes('security')
-  )
-    return 1
-  if (
-    (q.includes('clean code') ||
-      q.includes('code quality') ||
-      q.includes('maintainable')) &&
-    c.includes('clean_code')
-  )
-    return 1
+  const keywords = loadCategoryKeywords()
+  let score = 0
 
-  return 0
+  for (const keyword of keywords) {
+    if (q.includes(keyword) && c.includes(keyword)) {
+      score += 1
+    }
+  }
+
+  return score
 }

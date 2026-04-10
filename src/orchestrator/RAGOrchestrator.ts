@@ -1,14 +1,19 @@
 import type { DocumentIngestionInterface } from '../types/DocumentIngestionInterface.js'
 import type { DocumentRetrievalInterface } from '../types/DocumentRetrievalInterface.js'
 import type { LLMInterface } from '../types/LLMInterface.js'
-// import type { GeneratedIaC } from '../types/GeneratedIaC.js'
 import type { StoredDocument } from '../types/StoredDocument.js'
 import { buildContextFromDocuments } from '../utils/buildContext.js'
 import { saveIaCResults } from '../utils/iacWriter.js'
 import {
   SELF_EVAL_PROMPT,
+  SELF_EVAL_QUERY,
+  SELF_EVAL_QUERY_CATEGORY_FILTER,
   SELF_EVAL_SECURITY_QUERY,
+  SELF_EVAL_SECURITY_QUERY_CATEGORY_FILTER,
   SELF_EVAL_CLEAN_CODE_QUERY,
+  SELF_EVAL_CLEAN_CODE_QUERY_CATEGORY_FILTER,
+  SELF_EVAL_BEGINNERS_QUERY,
+  SELF_EVAL_BEGINNERS_QUERY_CATEGORY_FILTER,
 } from '../prompts/selfEvalPrompts.js'
 import { ABSTRACTIVE_SUMMARY_PROMPT } from '../prompts/summaryPrompt.js'
 
@@ -23,8 +28,6 @@ import { ABSTRACTIVE_SUMMARY_PROMPT } from '../prompts/summaryPrompt.js'
  * @version 1.0
  */
 export class RAGOrchestrator {
-  // #generatedIaC: string | null;
-  // #generatedIaCSelfEvaluated: string | null;
   #ingestionInstance: DocumentIngestionInterface
   #retrievalInstance: DocumentRetrievalInterface
   #llmInstance: LLMInterface
@@ -116,12 +119,20 @@ export class RAGOrchestrator {
   async #retrieveDocumentsSelfEval(): Promise<StoredDocument[]> {
     return this.#retrievalInstance.retrieveDocumentsSelfEval([
       {
+        query: SELF_EVAL_QUERY,
+        categoryFilter: SELF_EVAL_QUERY_CATEGORY_FILTER,
+      },
+      {
         query: SELF_EVAL_SECURITY_QUERY,
-        categoryFilter: 'iac_security_article',
+        categoryFilter: SELF_EVAL_SECURITY_QUERY_CATEGORY_FILTER,
       },
       {
         query: SELF_EVAL_CLEAN_CODE_QUERY,
-        categoryFilter: 'clean_code_article',
+        categoryFilter: SELF_EVAL_CLEAN_CODE_QUERY_CATEGORY_FILTER,
+      },
+      {
+        query: SELF_EVAL_BEGINNERS_QUERY,
+        categoryFilter: SELF_EVAL_BEGINNERS_QUERY_CATEGORY_FILTER,
       },
     ])
   }
