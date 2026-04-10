@@ -62,6 +62,7 @@ export async function parsePDF(source: string): Promise<ParsedDocument> {
       metadata: {
         ...(metadata as unknown as Record<string, unknown>),
         source,
+        title,
       },
     }
   } catch (error) {

@@ -10,7 +10,7 @@ dotenv.config()
  */
 function isValidPdfSource(url: string): boolean {
   if (url.startsWith('http://') || url.startsWith('https://')) {
-    return url.toLowerCase().endsWith('.pdf')
+    return true
   }
 
   const isLocalPath =
