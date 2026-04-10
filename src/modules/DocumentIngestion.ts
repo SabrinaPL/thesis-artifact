@@ -2,6 +2,7 @@ import type { VectorDBStoreInterface } from '../types/VectorDBStoreInterface.js'
 import type { DocumentEntry } from '../types/DocumentType.js'
 import { getParser } from '../utils/parserSelector.js'
 import { retrieveDocuments } from '../utils/urlRetriever.js'
+import { retrievePdfDocuments } from '../utils/pdfRetriever.js'
 import { chunkText } from '../utils/textChunker.js'
 import { closeBrowser } from '../utils/parser.js'
 import { createDocumentHash } from '../utils/hashDocument.js'
@@ -34,9 +35,21 @@ export class DocumentIngestion {
 
   async ingestDocuments() {
     const documents = retrieveDocuments()
+    let pdfDocuments: DocumentEntry[] = []
 
     try {
-      for (const document of documents) {
+      pdfDocuments = retrievePdfDocuments()
+    } catch (error) {
+      console.warn(
+        'PDF_DOCUMENTS is not set or invalid, skipping PDF ingestion',
+        error,
+      )
+    }
+
+    const allDocuments = [...documents, ...pdfDocuments]
+
+    try {
+      for (const document of allDocuments) {
         try {
           await this.ingestDocument(document)
         } catch (error) {

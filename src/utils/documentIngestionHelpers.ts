@@ -70,26 +70,49 @@ export function shouldSkipDocument(title: string, text: string): boolean {
   return false
 }
 
+export function isHttpUrl(value: string): boolean {
+  return value.startsWith('http://') || value.startsWith('https://')
+}
+
 /**
  * Normalizes a URL by trimming whitespace, removing trailing slashes from the pathname, and converting the hostname to lowercase.
- * @param url - The URL to normalize.
- * @returns The normalized URL as a string.
+ * @param source - The URL to normalize.
+ * @returns The normalized URL.
  */
-export function normalizeUrl(url: string): string {
-  const normalized = new URL(url.trim())
+export function normalizeUrl(source: string): string {
+  const trimmed = source.trim()
+
+  if (!isHttpUrl(trimmed)) {
+    return trimmed
+  }
+
+  const normalized = new URL(trimmed)
 
   if (normalized.pathname.length > 1 && normalized.pathname.endsWith('/')) {
     normalized.pathname = normalized.pathname.slice(0, -1)
   }
 
   normalized.hostname = normalized.hostname.toLowerCase()
+  normalized.hash = ''
 
   return normalized.toString()
 }
 
-export function getSourceVariants(url: string): string[] {
-  const raw = url.trim()
-  const normalized = normalizeUrl(url)
+/**
+ * Generates source variants for a given URL, including the original URL and a normalized version (if it's an HTTP URL),
+ * to improve matching against stored documents in the database.
+ *
+ * @param source - The original URL of the document.
+ * @returns - An array of source variants, including the original URL and a normalized version if applicable.
+ */
+export function getSourceVariants(source: string): string[] {
+  const raw = source.trim()
+
+  if (!isHttpUrl(raw)) {
+    return [raw]
+  }
+
+  const normalized = normalizeUrl(raw)
 
   return [...new Set([raw, normalized])]
 }

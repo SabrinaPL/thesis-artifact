@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { DocumentIngestion } from '../src/modules/DocumentIngestion.js'
 import { getParser } from '../src/utils/parserSelector.js'
 import { retrieveDocuments } from '../src/utils/urlRetriever.js'
+import { retrievePdfDocuments } from '../src/utils/pdfRetriever.js'
 import { chunkText } from '../src/utils/textChunker.js'
 import { closeBrowser } from '../src/utils/parser.js'
 import { createDocumentHash } from '../src/utils/hashDocument.js'
@@ -14,6 +15,10 @@ vi.mock('../src/utils/parserSelector.js', () => ({
 
 vi.mock('../src/utils/urlRetriever.js', () => ({
   retrieveDocuments: vi.fn(),
+}))
+
+vi.mock('../src/utils/pdfRetriever.js', () => ({
+  retrievePdfDocuments: vi.fn(),
 }))
 
 vi.mock('../src/utils/textChunker.js', () => ({
@@ -73,7 +78,7 @@ describe('DocumentIngestion', () => {
     vi.restoreAllMocks()
   })
 
-  it('should call ingestDocument for each retrieved document', async () => {
+  it('should call ingestDocument for both regular documents and local PDF documents', async () => {
     const docs = [
       {
         url: 'https://example.com/doc1',
@@ -87,7 +92,16 @@ describe('DocumentIngestion', () => {
       },
     ]
 
+    const pdfDocs = [
+      {
+        url: './fixtures/test.pdf',
+        category: 'pdf_test',
+        description: 'Local PDF document',
+      },
+    ]
+
     vi.mocked(retrieveDocuments).mockReturnValue(docs)
+    vi.mocked(retrievePdfDocuments).mockReturnValue(pdfDocs)
 
     const ingestion = new DocumentIngestion(mockVectorDBStore, mockEmbedder)
     const ingestSpy = vi
@@ -96,9 +110,36 @@ describe('DocumentIngestion', () => {
 
     await ingestion.ingestDocuments()
 
-    expect(ingestSpy).toHaveBeenCalledTimes(2)
+    expect(ingestSpy).toHaveBeenCalledTimes(3)
     expect(ingestSpy).toHaveBeenNthCalledWith(1, docs[0])
     expect(ingestSpy).toHaveBeenNthCalledWith(2, docs[1])
+    expect(ingestSpy).toHaveBeenNthCalledWith(3, pdfDocs[0])
+    expect(closeBrowser).toHaveBeenCalledOnce()
+  })
+
+  it('should continue ingestion when PDF documents are unavailable', async () => {
+    const docs = [
+      {
+        url: 'https://example.com/doc1',
+        category: 'test',
+        description: 'Document 1',
+      },
+    ]
+
+    vi.mocked(retrieveDocuments).mockReturnValue(docs)
+    vi.mocked(retrievePdfDocuments).mockImplementation(() => {
+      throw new Error('PDF_DOCUMENTS is not set')
+    })
+
+    const ingestion = new DocumentIngestion(mockVectorDBStore, mockEmbedder)
+    const ingestSpy = vi
+      .spyOn(ingestion, 'ingestDocument')
+      .mockResolvedValue(undefined)
+
+    await ingestion.ingestDocuments()
+
+    expect(ingestSpy).toHaveBeenCalledTimes(1)
+    expect(ingestSpy).toHaveBeenCalledWith(docs[0])
     expect(closeBrowser).toHaveBeenCalledOnce()
   })
 

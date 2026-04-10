@@ -3,6 +3,7 @@ import { Readability } from '@mozilla/readability' // Chosen for its ability to 
 import { JSDOM } from 'jsdom'
 import type { ParsedDocument } from '../types/DocumentType.js'
 import { chromium, type Browser } from 'playwright'
+import { readFile } from 'node:fs/promises'
 
 let _browser: Browser | null = null
 
@@ -29,38 +30,46 @@ export async function closeBrowser() {
 /**
  * Function to parse a PDF document from a given URL using the pdf-parse library. It extracts the text content and metadata from the PDF, and returns it in a structured format.
  * This is used to handle PDF documents during ingestion, allowing their content to be indexed and made searchable in the vector database.
- * @param url - The URL of the PDF document to parse.
- * @returns A promise that resolves to a ParsedDocument object containing the text, title, and metadata of the PDF.
+ * @param source - The URL or file path of the PDF document to parse.
+ * @returns A promise that resolves to a ParsedDocument object containing the text, title, and metadata of the PDF document.
  */
-export async function parsePDF(url: string): Promise<ParsedDocument> {
-  console.log('Parsing PDF document from URL:', url)
+export async function parsePDF(source: string): Promise<ParsedDocument> {
+  const isHttpSource =
+    source.startsWith('http://') || source.startsWith('https://')
 
-  const parser = new PDFParse({ url })
+  console.log(
+    isHttpSource
+      ? `Parsing PDF document from URL: ${source}`
+      : `Parsing PDF document from file: ${source}`,
+  )
+
+  const parser = isHttpSource
+    ? new PDFParse({ url: source })
+    : new PDFParse({ data: await readFile(source) })
 
   try {
     const metadata = await parser.getInfo()
     const textResult = await parser.getText()
+
     const title =
       typeof metadata?.info?.Title === 'string' && metadata.info.Title.trim()
         ? metadata.info.Title.trim()
         : 'Untitled document'
 
-    const parsedDocument = {
+    return {
       text: textResult.text,
       title,
-      metadata: metadata as unknown as Record<string, unknown>,
+      metadata: {
+        ...(metadata as unknown as Record<string, unknown>),
+        source,
+        title,
+      },
     }
-
-    // console.log('Parsed PDF document text:', parsedDocument.text)
-
-    return parsedDocument
   } catch (error) {
     console.error('Error parsing PDF document:', error)
     throw error
   } finally {
-    // Clean up parser after parsing is done
     await parser.destroy().catch(() => {})
-    // TODO: add error handling logic
   }
 }
 
