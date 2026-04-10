@@ -3,26 +3,11 @@ import type { DocumentEntry } from '../types/DocumentType.js'
 
 dotenv.config()
 
-// export function isHttpUrl(value: string): boolean {
-//   return value.startsWith('http://') || value.startsWith('https://')
-// }
-
-// export function normalizeUrl(source: string): string {
-//   if (!isHttpUrl(source)) {
-//     return source
-//   }
-
-//   const url = new URL(source)
-//   url.hash = ''
-
-//   const normalizedPath =
-//     url.pathname !== '/' && url.pathname.endsWith('/')
-//       ? url.pathname.slice(0, -1)
-//       : url.pathname
-
-//   return `${url.origin}${normalizedPath}${url.search}`
-// }
-
+/**
+ * Checks if a given URL is a valid PDF source, either as an HTTP/HTTPS URL ending with .pdf or as a local file path ending with .pdf.
+ * @param url - The URL or file path to check.
+ * @returns True if the URL is a valid PDF source, false otherwise.
+ */
 function isValidPdfSource(url: string): boolean {
   if (url.startsWith('http://') || url.startsWith('https://')) {
     return url.toLowerCase().endsWith('.pdf')
@@ -33,14 +18,12 @@ function isValidPdfSource(url: string): boolean {
 
   return isLocalPath && url.toLowerCase().endsWith('.pdf')
 }
-//   url.startsWith('http://') ||
-//   url.startsWith('https://') ||
-//   url.startsWith('./') ||
-//   url.startsWith('../') ||
-//   url.startsWith('/') ||
-//   url.endsWith('.pdf')
-// )
 
+/**
+ * Retrieves PDF document entries from the PDF_DOCUMENTS environment variable, which should be a JSON array of objects containing url, category, and description fields. Validates the structure and content of the entries, ensuring that each entry has a valid PDF source URL or file path.
+ * @returns An array of DocumentEntry objects representing the PDF documents to be ingested.
+ * @throws An error if the PDF_DOCUMENTS variable is not set, contains invalid JSON, is not an array, or if any entry does not have the required fields or valid PDF sources.
+ */
 export function retrievePdfDocuments(): DocumentEntry[] {
   const raw = process.env.PDF_DOCUMENTS
 
