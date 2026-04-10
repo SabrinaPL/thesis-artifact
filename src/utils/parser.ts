@@ -66,42 +66,42 @@ export async function closeBrowser() {
 // }
 export async function parsePDF(source: string): Promise<ParsedDocument> {
   const isHttpSource =
-      source.startsWith('http://') || source.startsWith('https://')
+    source.startsWith('http://') || source.startsWith('https://')
 
-    console.log(
-      isHttpSource
-        ? `Parsing PDF document from URL: ${source}`
-        : `Parsing PDF document from file: ${source}`,
-    )
+  console.log(
+    isHttpSource
+      ? `Parsing PDF document from URL: ${source}`
+      : `Parsing PDF document from file: ${source}`,
+  )
 
-    const parser = isHttpSource
-      ? new PDFParse({ url: source })
-      : new PDFParse({ data: await readFile(source) })
+  const parser = isHttpSource
+    ? new PDFParse({ url: source })
+    : new PDFParse({ data: await readFile(source) })
 
-    try {
-      const metadata = await parser.getInfo()
-      const textResult = await parser.getText()
+  try {
+    const metadata = await parser.getInfo()
+    const textResult = await parser.getText()
 
-      const title =
-        typeof metadata?.info?.Title === 'string' && metadata.info.Title.trim()
-          ? metadata.info.Title.trim()
-          : 'Untitled document'
+    const title =
+      typeof metadata?.info?.Title === 'string' && metadata.info.Title.trim()
+        ? metadata.info.Title.trim()
+        : 'Untitled document'
 
-      return {
-        text: textResult.text,
-        title,
-        metadata: {
-          ...(metadata as unknown as Record<string, unknown>),
-          source,
-        },
-      }
-    } catch (error) {
-      console.error('Error parsing PDF document:', error)
-      throw error
-    } finally {
-      await parser.destroy().catch(() => {})
+    return {
+      text: textResult.text,
+      title,
+      metadata: {
+        ...(metadata as unknown as Record<string, unknown>),
+        source,
+      },
     }
+  } catch (error) {
+    console.error('Error parsing PDF document:', error)
+    throw error
+  } finally {
+    await parser.destroy().catch(() => {})
   }
+}
 
 // Minimum text length to consider a static parse successful
 const MIN_STATIC_TEXT_LENGTH = 200 // TODO: adjust this threshodl?

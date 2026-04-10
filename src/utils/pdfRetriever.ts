@@ -33,13 +33,13 @@ function isValidPdfSource(url: string): boolean {
 
   return isLocalPath && url.toLowerCase().endsWith('.pdf')
 }
-  //   url.startsWith('http://') ||
-  //   url.startsWith('https://') ||
-  //   url.startsWith('./') ||
-  //   url.startsWith('../') ||
-  //   url.startsWith('/') ||
-  //   url.endsWith('.pdf')
-  // )
+//   url.startsWith('http://') ||
+//   url.startsWith('https://') ||
+//   url.startsWith('./') ||
+//   url.startsWith('../') ||
+//   url.startsWith('/') ||
+//   url.endsWith('.pdf')
+// )
 
 export function retrievePdfDocuments(): DocumentEntry[] {
   const raw = process.env.PDF_DOCUMENTS

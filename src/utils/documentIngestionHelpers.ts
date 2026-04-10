@@ -100,10 +100,7 @@ export function normalizeUrl(source: string): string {
 
   const normalized = new URL(trimmed)
 
-  if (
-    normalized.pathname.length > 1 &&
-    normalized.pathname.endsWith('/')
-  ) {
+  if (normalized.pathname.length > 1 && normalized.pathname.endsWith('/')) {
     normalized.pathname = normalized.pathname.slice(0, -1)
   }
 
