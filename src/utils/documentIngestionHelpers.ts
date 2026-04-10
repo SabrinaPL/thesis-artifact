@@ -99,9 +99,9 @@ export function normalizeUrl(source: string): string {
 }
 
 /**
- * Generates source variants for a given URL, including the original URL and a normalized version (if it's an HTTP URL), 
+ * Generates source variants for a given URL, including the original URL and a normalized version (if it's an HTTP URL),
  * to improve matching against stored documents in the database.
- * 
+ *
  * @param source - The original URL of the document.
  * @returns - An array of source variants, including the original URL and a normalized version if applicable.
  */
