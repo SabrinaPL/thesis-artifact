@@ -135,7 +135,7 @@ export const PROMPT_THIRD_EXPERIMENT = `
 export const PROMPT_FOURTH_EXPERIMENT = `
     Task:
 
-    Generate an Infrastructure-as-Code solution that provisions a load-balanced web application with shared persistent storage and integrates Terraform execution into a CI/CD pipeline.
+    Generate an Infrastructure-as-Code solution for OpenStack that provisions a load-balanced web application with shared persistent storage and integrates Terraform execution into a CI/CD pipeline.
 
     Requirements:
 
