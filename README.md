@@ -1,6 +1,6 @@
 # Introduction
 
-This RAG-artifact was created as part of a scientific study (bachelor's thesis) that follows a Design Science Research Methodology approach (DSRM).
+This RAG-artifact was created as part of a scientific study (bachelor's thesis at Linneaus University) that follows a Design Science Research Methodology approach (DSRM). The published thesis can be found on [DiVA](https://www.diva-portal.org/smash/record.jsf?aq2=%5B%5B%5D%5D&c=1&af=%5B%5D&searchType=SIMPLE&sortOrder2=title_sort_asc&query=sabrina+prichard-lybeck&language=sv&pid=diva2%3A2076086&aq=%5B%5B%5D%5D&sf=all&aqe=%5B%5D&sortOrder=author_sort_asc&onlyFullText=false&noOfRows=50&dswid=-3993).
 
 ## Authors
 
